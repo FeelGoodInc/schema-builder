@@ -1,49 +1,235 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
+* {
+  box-sizing: border-box;
 }
 
 html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+body,
+#root,
+body > div {
+  height: 100%;
 }
 
 body {
-  min-height: 100%;
+  margin: 0;
+  background: #f2f4f7;
+  color: #1f2733;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.sb-app {
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  min-height: 0;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+.sb-header {
+  padding: 10px 14px;
+  background: #fff;
+  border-bottom: 1px solid #e5e6eb;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.sb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+.sb-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sb-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+
+.sb-canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #f7f9fb;
+  touch-action: none;
+}
+
+.sb-canvas-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sb-nodes-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.sb-node {
+  pointer-events: auto;
+  user-select: none;
+}
+
+.sb-handles-layer {
+  z-index: 5;
+  pointer-events: none;
+}
+
+.sb-handles-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sb-selection-frame {
+  position: absolute;
+  border: 1px dashed #1677ff;
+  background: rgba(22, 119, 255, 0.06);
+  pointer-events: none;
+}
+
+.sb-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border: 2px solid #1677ff;
+  border-radius: 50%;
+  pointer-events: auto;
+  z-index: 6;
+}
+
+.sb-handle--vertex {
+  border-radius: 2px;
+  cursor: crosshair;
+}
+
+.sb-handle--rotate {
+  background: #1677ff;
+  cursor: alias;
+}
+
+.sb-canvas-hud {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: #55606e;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e5e6eb;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.sb-side {
+  width: 320px;
+  flex: 0 0 320px;
+  background: #fff;
+  border-left: 1px solid #e5e6eb;
+  overflow: auto;
+  padding: 12px;
+}
+
+.sb-panel-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sb-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+
+.sb-icon-tile {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  background: #fbfdff;
+  color: #2b3644;
+  cursor: grab;
+}
+
+.sb-icon-tile:hover {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+
+.sb-component-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-component-item {
+  padding: 8px 10px;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  background: #fbfdff;
+  cursor: grab;
+}
+
+.sb-component-item:hover {
+  border-color: #1677ff;
+}
+
+.sb-panel-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.sb-inspector {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 280px;
+  z-index: 10;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(15, 30, 50, 0.18);
+}
+
+.sb-loading {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes sb-lamp-pulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.9;
   }
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+.sb-lamp-ring {
+  animation: sb-lamp-pulse 1.6s ease-out infinite;
 }
