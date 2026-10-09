@@ -1,6 +1,6 @@
 'use client';
 
-import { createElement, useEffect, useState } from 'react';
+import { createElement, memo, useEffect, useState } from 'react';
 import type { CSSProperties, MouseEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { IconType } from 'react-icons';
 import type { IconLibKey, Pt, SchemaNode, Viewport } from '@/types/schema';
@@ -44,7 +44,7 @@ interface NodeViewProps {
   onActivate: (node: SchemaNode) => void;
 }
 
-export default function NodeView({
+function NodeView({
   node,
   viewport,
   editable,
@@ -153,6 +153,8 @@ export default function NodeView({
     </div>
   );
 }
+
+export default memo(NodeView);
 
 function UnknownNode({ label, size }: { label: string; size: number }) {
   return (

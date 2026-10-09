@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { Pt, SchemaNode, TriangleNode, Viewport } from '@/types/schema';
 import { startPointerDrag } from '@/lib/drag';
@@ -8,7 +9,6 @@ import {
   MIN_NODE_SIZE,
   centroid,
   degreesFromCenter,
-  maxDistance,
   normalizeDegrees,
   rotateOffset,
   rotatePoint,
@@ -19,11 +19,13 @@ import {
 
 const HANDLE_SIZE = 12;
 const ROTATE_OFFSET = 26;
+const TRIANGLE_PIN_DISTANCE = 28;
 
 interface HandlesLayerProps {
   node: SchemaNode;
   viewport: Viewport;
   toLocal: (clientX: number, clientY: number) => Pt;
+  pointer: Pt | null;
   onResize: (id: string, size: number) => void;
   onSetRotation: (id: string, degrees: number) => void;
   onSetVertex: (id: string, index: number, world: Pt) => void;
@@ -34,6 +36,7 @@ export default function HandlesLayer({
   node,
   viewport,
   toLocal,
+  pointer,
   onResize,
   onSetRotation,
   onSetVertex,
@@ -45,6 +48,7 @@ export default function HandlesLayer({
         node={node}
         viewport={viewport}
         toLocal={toLocal}
+        pointer={pointer}
         onSetVertex={onSetVertex}
         onSetVertices={onSetVertices}
       />
@@ -140,41 +144,75 @@ export default function HandlesLayer({
   );
 }
 
+function distance(a: Pt, b: Pt): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function nearestVertexIndex(vertices: Pt[], reference: Pt): number {
+  let index = 0;
+  let best = Number.POSITIVE_INFINITY;
+  vertices.forEach((vertex, i) => {
+    const value = distance(vertex, reference);
+    if (value < best) {
+      best = value;
+      index = i;
+    }
+  });
+  return index;
+}
+
+function outwardDirection(from: Pt, to: Pt): Pt {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 1e-6) return { x: 0, y: -1 };
+  return { x: dx / length, y: dy / length };
+}
+
 function TriangleHandles({
   node,
   viewport,
   toLocal,
+  pointer,
   onSetVertex,
   onSetVertices,
 }: {
   node: TriangleNode;
   viewport: Viewport;
   toLocal: (clientX: number, clientY: number) => Pt;
+  pointer: Pt | null;
   onSetVertex: (id: string, index: number, world: Pt) => void;
   onSetVertices: (id: string, vertices: [Pt, Pt, Pt]) => void;
 }) {
+  const [pinnedVertex, setPinnedVertex] = useState<number | null>(null);
+
   const screenVertices = node.vertices.map((v) => worldToScreen(viewport, v));
   const centerWorld = centroid(node.vertices);
   const centerScreen = worldToScreen(viewport, centerWorld);
-  const radius = maxDistance(screenVertices, centerScreen) + ROTATE_OFFSET;
-  const baseAngle = (degreesFromCenter(centerScreen, screenVertices[0]) * Math.PI) / 180;
-  const rotateHandle = {
-    x: centerScreen.x + Math.cos(baseAngle) * radius,
-    y: centerScreen.y + Math.sin(baseAngle) * radius,
+
+  const anchorIndex = pinnedVertex ?? nearestVertexIndex(screenVertices, pointer ?? centerScreen);
+  const anchor = screenVertices[anchorIndex];
+  const direction = outwardDirection(centerScreen, anchor);
+  const pin = {
+    x: anchor.x + direction.x * TRIANGLE_PIN_DISTANCE,
+    y: anchor.y + direction.y * TRIANGLE_PIN_DISTANCE,
   };
 
   const startVertexDrag = (index: number) => (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
+    setPinnedVertex(index);
     startPointerDrag({
       event,
       onMove: (client) => {
         onSetVertex(node.id, index, screenToWorld(viewport, toLocal(client.x, client.y)));
       },
+      onEnd: () => setPinnedVertex(null),
     });
   };
 
   const startRotate = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
+    setPinnedVertex(anchorIndex);
     const snapshot = node.vertices.map((v) => ({ ...v })) as [Pt, Pt, Pt];
     const snapshotCenter = centroid(snapshot);
     const startCursor = screenToWorld(viewport, toLocal(event.clientX, event.clientY));
@@ -193,6 +231,7 @@ function TriangleHandles({
           snapshot.map((v) => rotatePoint(v, snapshotCenter, radians)) as [Pt, Pt, Pt]
         );
       },
+      onEnd: () => setPinnedVertex(null),
     });
   };
 
@@ -207,26 +246,26 @@ function TriangleHandles({
           strokeDasharray="5 4"
         />
         <line
-          x1={centerScreen.x}
-          y1={centerScreen.y}
-          x2={rotateHandle.x}
-          y2={rotateHandle.y}
+          x1={anchor.x}
+          y1={anchor.y}
+          x2={pin.x}
+          y2={pin.y}
           stroke="#1677ff"
           strokeWidth={1}
         />
         <circle cx={centerScreen.x} cy={centerScreen.y} r={3} fill="#1677ff" />
       </svg>
-      {screenVertices.map((point, index) => (
+      {screenVertices.map((vertex, index) => (
         <div
           key={index}
           className="sb-handle sb-handle--vertex"
-          style={{ left: point.x - HANDLE_SIZE / 2, top: point.y - HANDLE_SIZE / 2 }}
+          style={{ left: vertex.x - HANDLE_SIZE / 2, top: vertex.y - HANDLE_SIZE / 2 }}
           onPointerDown={startVertexDrag(index)}
         />
       ))}
       <div
         className="sb-handle sb-handle--rotate"
-        style={{ left: rotateHandle.x - HANDLE_SIZE / 2, top: rotateHandle.y - HANDLE_SIZE / 2 }}
+        style={{ left: pin.x - HANDLE_SIZE / 2, top: pin.y - HANDLE_SIZE / 2 }}
         onPointerDown={startRotate}
       />
     </>

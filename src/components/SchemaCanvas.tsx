@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { NewNode, Pt, SchemaNode } from '@/types/schema';
 import { useSchema } from '@/state/schemaStore';
@@ -50,6 +50,18 @@ export default function SchemaCanvas() {
       element.removeEventListener('wheel', handleWheel);
     };
   }, [dispatch, toLocal]);
+
+  const [pointer, setPointer] = useState<Pt | null>(null);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || state.mode !== 'edit' || !state.selectedId) return;
+    const handlePointerMove = (event: PointerEvent) => {
+      setPointer(toLocal(event.clientX, event.clientY));
+    };
+    element.addEventListener('pointermove', handlePointerMove);
+    return () => element.removeEventListener('pointermove', handlePointerMove);
+  }, [state.mode, state.selectedId, toLocal]);
 
   const moveNode = useCallback(
     (id: string, anchor: Pt) => {
@@ -194,6 +206,7 @@ export default function SchemaCanvas() {
             node={selectedNode}
             viewport={state.viewport}
             toLocal={toLocal}
+            pointer={pointer}
             onResize={(id, size) =>
               dispatch({
                 type: 'update-node',
