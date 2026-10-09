@@ -19,7 +19,14 @@ import type {
   SchemaNode,
   Viewport,
 } from '@/types/schema';
-import { clampScale, fitViewport, panBy, rotatePoint, zoomAtPoint } from '@/lib/transform';
+import {
+  bakeGroupTransform,
+  clampScale,
+  fitViewport,
+  panBy,
+  rotatePoint,
+  zoomAtPoint,
+} from '@/lib/transform';
 
 export interface SchemaState {
   mode: EditorMode;
@@ -140,6 +147,8 @@ function reducer(state: SchemaState, action: SchemaAction): SchemaState {
         id: createNodeId(),
         kind: 'group',
         children: selectedNodes as ChildNode[],
+        scale: 1,
+        rotation: 0,
       };
       const nodes = state.nodes.filter((node) => !selected.has(node.id));
       nodes.splice(insertAt, 0, group);
@@ -152,7 +161,7 @@ function reducer(state: SchemaState, action: SchemaAction): SchemaState {
       const group = state.nodes[index] as GroupNode;
       const nodes = [
         ...state.nodes.slice(0, index),
-        ...group.children,
+        ...bakeGroupTransform(group),
         ...state.nodes.slice(index + 1),
       ];
       return { ...state, nodes, selectedIds: group.children.map((node) => node.id) };

@@ -2,13 +2,18 @@
 
 import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { ChildNode, Pt, TriangleNode, Viewport } from '@/types/schema';
+import type { ChildNode, GroupNode, Pt, TriangleNode, Viewport } from '@/types/schema';
 import { startPointerDrag } from '@/lib/drag';
 import {
+  MAX_GROUP_SCALE,
   MAX_NODE_SIZE,
+  MIN_GROUP_SCALE,
   MIN_NODE_SIZE,
   centroid,
+  clamp,
   degreesFromCenter,
+  groupBaseBounds,
+  groupPivot,
   normalizeDegrees,
   rotateOffset,
   rotatePoint,
@@ -22,12 +27,14 @@ const ROTATE_OFFSET = 26;
 const TRIANGLE_PIN_DISTANCE = 28;
 
 interface HandlesLayerProps {
-  node: ChildNode;
+  node: ChildNode | GroupNode;
   viewport: Viewport;
   toLocal: (clientX: number, clientY: number) => Pt;
   pointer: Pt | null;
   onResize: (id: string, size: number) => void;
   onSetRotation: (id: string, degrees: number) => void;
+  onSetGroupScale: (id: string, scale: number) => void;
+  onSetGroupRotation: (id: string, degrees: number) => void;
   onSetVertex: (id: string, index: number, world: Pt) => void;
   onSetVertices: (id: string, vertices: [Pt, Pt, Pt]) => void;
 }
@@ -39,9 +46,23 @@ export default function HandlesLayer({
   pointer,
   onResize,
   onSetRotation,
+  onSetGroupScale,
+  onSetGroupRotation,
   onSetVertex,
   onSetVertices,
 }: HandlesLayerProps) {
+  if (node.kind === 'group') {
+    return (
+      <GroupHandles
+        node={node}
+        viewport={viewport}
+        toLocal={toLocal}
+        onSetGroupScale={onSetGroupScale}
+        onSetGroupRotation={onSetGroupRotation}
+      />
+    );
+  }
+
   if (node.kind === 'triangle') {
     return (
       <TriangleHandles
@@ -111,6 +132,117 @@ export default function HandlesLayer({
         <line
           x1={center.x + rotateOffset({ x: 0, y: -half }, node.rotation).x}
           y1={center.y + rotateOffset({ x: 0, y: -half }, node.rotation).y}
+          x2={center.x + rotateHandleOffset.x}
+          y2={center.y + rotateHandleOffset.y}
+          stroke="#1677ff"
+          strokeWidth={1}
+        />
+      </svg>
+      {corners.map((corner, index) => {
+        const offset = rotateOffset(corner, node.rotation);
+        return (
+          <div
+            key={index}
+            className="sb-handle sb-handle--resize"
+            style={{
+              left: center.x + offset.x - HANDLE_SIZE / 2,
+              top: center.y + offset.y - HANDLE_SIZE / 2,
+              cursor: index % 2 === 0 ? 'nwse-resize' : 'nesw-resize',
+            }}
+            onPointerDown={startResize()}
+          />
+        );
+      })}
+      <div
+        className="sb-handle sb-handle--rotate"
+        style={{
+          left: center.x + rotateHandleOffset.x - HANDLE_SIZE / 2,
+          top: center.y + rotateHandleOffset.y - HANDLE_SIZE / 2,
+        }}
+        onPointerDown={startRotate}
+      />
+    </>
+  );
+}
+
+function GroupHandles({
+  node,
+  viewport,
+  toLocal,
+  onSetGroupScale,
+  onSetGroupRotation,
+}: {
+  node: GroupNode;
+  viewport: Viewport;
+  toLocal: (clientX: number, clientY: number) => Pt;
+  onSetGroupScale: (id: string, scale: number) => void;
+  onSetGroupRotation: (id: string, degrees: number) => void;
+}) {
+  const base = groupBaseBounds(node);
+  const center = worldToScreen(viewport, groupPivot(node));
+  const halfW = (base.width * node.scale * viewport.scale) / 2;
+  const halfH = (base.height * node.scale * viewport.scale) / 2;
+
+  const startResize = () => (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    const startScale = node.scale;
+    const startHalfW = (base.width * startScale * viewport.scale) / 2;
+    const startHalfH = (base.height * startScale * viewport.scale) / 2;
+    startPointerDrag({
+      event,
+      onMove: (client) => {
+        const local = toLocal(client.x, client.y);
+        const rotated = rotateOffset({ x: local.x - center.x, y: local.y - center.y }, -node.rotation);
+        const factor = Math.max(
+          Math.abs(rotated.x) / Math.max(startHalfW, 1),
+          Math.abs(rotated.y) / Math.max(startHalfH, 1)
+        );
+        onSetGroupScale(node.id, clamp(startScale * factor, MIN_GROUP_SCALE, MAX_GROUP_SCALE));
+      },
+    });
+  };
+
+  const startRotate = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    const startRotation = node.rotation;
+    const startAngle = degreesFromCenter(center, toLocal(event.clientX, event.clientY));
+    startPointerDrag({
+      event,
+      onMove: (client, native) => {
+        const local = toLocal(client.x, client.y);
+        let delta = degreesFromCenter(center, local) - startAngle;
+        if (native.shiftKey) delta = snapDegrees(delta);
+        onSetGroupRotation(node.id, normalizeDegrees(startRotation + delta));
+      },
+    });
+  };
+
+  const corners: Array<{ x: number; y: number }> = [
+    { x: -halfW, y: -halfH },
+    { x: halfW, y: -halfH },
+    { x: halfW, y: halfH },
+    { x: -halfW, y: halfH },
+  ];
+
+  const rotateHandleOffset = rotateOffset({ x: 0, y: -halfH - ROTATE_OFFSET }, node.rotation);
+
+  return (
+    <>
+      <div
+        className="sb-selection-frame"
+        style={{
+          position: 'absolute',
+          left: center.x - halfW,
+          top: center.y - halfH,
+          width: halfW * 2,
+          height: halfH * 2,
+          transform: `rotate(${node.rotation}deg)`,
+        }}
+      />
+      <svg className="sb-handles-svg" width="100%" height="100%">
+        <line
+          x1={center.x + rotateOffset({ x: 0, y: -halfH }, node.rotation).x}
+          y1={center.y + rotateOffset({ x: 0, y: -halfH }, node.rotation).y}
           x2={center.x + rotateHandleOffset.x}
           y2={center.y + rotateHandleOffset.y}
           stroke="#1677ff"

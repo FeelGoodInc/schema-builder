@@ -126,7 +126,11 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
       children.push(result.node);
     }
 
-    return { ok: true, node: { id, kind: 'group', children } };
+    const rawScale = num(record.scale);
+    const scale = rawScale !== undefined && rawScale > 0 ? rawScale : 1;
+    const rotation = num(record.rotation) ?? 0;
+
+    return { ok: true, node: { id, kind: 'group', children, scale, rotation } };
   }
 
   return { ok: false, error: `${label}: неизвестный kind "${kind}"` };
@@ -135,7 +139,9 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
 export function validateSchema(raw: unknown): ValidationResult {
   if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'Файл не является объектом JSON' };
   const doc = raw as Record<string, unknown>;
-  if (doc.version !== 2 && doc.version !== 3) return { ok: false, error: 'Неподдерживаемая версия схемы' };
+  if (doc.version !== 2 && doc.version !== 3 && doc.version !== 4) {
+    return { ok: false, error: 'Неподдерживаемая версия схемы' };
+  }
   if (!Array.isArray(doc.nodes)) return { ok: false, error: 'Отсутствует массив nodes' };
 
   const nodes: SchemaNode[] = [];
@@ -150,7 +156,7 @@ export function validateSchema(raw: unknown): ValidationResult {
   const tx = num(viewportRaw?.tx) ?? 0;
   const ty = num(viewportRaw?.ty) ?? 0;
 
-  return { ok: true, document: { version: 3, nodes, viewport: { scale, tx, ty } } };
+  return { ok: true, document: { version: 4, nodes, viewport: { scale, tx, ty } } };
 }
 
 export async function readSchemaFile(file: File): Promise<ValidationResult> {

@@ -118,7 +118,7 @@ export default function Toolbar() {
         </Button>
         <Button
           size="sm"
-          onClick={() => downloadSchema({ version: 3, nodes: state.nodes, viewport: state.viewport })}
+          onClick={() => downloadSchema({ version: 4, nodes: state.nodes, viewport: state.viewport })}
         >
           Экспорт схемы
         </Button>

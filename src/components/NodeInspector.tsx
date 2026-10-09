@@ -4,7 +4,7 @@ import { Button, ButtonToolbar, InputPicker, NumberInput, Panel, VStack } from '
 import { useSchema } from '@/state/schemaStore';
 import { ICON_LIBS, getCachedIconNames } from '@/lib/iconsRegistry';
 import { listRegisteredComponents } from '@/lib/componentRegistry';
-import { MAX_NODE_SIZE, MIN_NODE_SIZE } from '@/lib/transform';
+import { MAX_GROUP_SCALE, MAX_NODE_SIZE, MIN_GROUP_SCALE, MIN_NODE_SIZE } from '@/lib/transform';
 import type { IconLibKey, SchemaNode, TriangleNode } from '@/types/schema';
 
 const COLORS = [
@@ -53,6 +53,38 @@ export default function NodeInspector() {
         <Panel bordered header="Свойства: group">
           <VStack spacing={10}>
             <div>Дочерних узлов: {node.children.length}</div>
+            <NumberInput
+              label="Масштаб, %"
+              min={MIN_GROUP_SCALE * 100}
+              max={MAX_GROUP_SCALE * 100}
+              step={5}
+              value={Math.round(node.scale * 100)}
+              onChange={(value) => {
+                const percent = Number(value);
+                if (!Number.isFinite(percent) || percent <= 0) return;
+                dispatch({
+                  type: 'update-node',
+                  id: node.id,
+                  mutate: (current) => (current.kind === 'group' ? { ...current, scale: percent / 100 } : current),
+                });
+              }}
+            />
+            <NumberInput
+              label="Поворот, °"
+              min={-360}
+              max={360}
+              step={15}
+              value={node.rotation}
+              onChange={(value) => {
+                const rotation = Number(value);
+                if (!Number.isFinite(rotation)) return;
+                dispatch({
+                  type: 'update-node',
+                  id: node.id,
+                  mutate: (current) => (current.kind === 'group' ? { ...current, rotation } : current),
+                });
+              }}
+            />
             <ButtonToolbar>
               <Button size="sm" appearance="primary" onClick={() => dispatch({ type: 'ungroup', id: node.id })}>
                 Разгруппировать

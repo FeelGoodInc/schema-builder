@@ -173,8 +173,8 @@ export default function SchemaCanvas() {
     ? { width: background.width, height: background.height }
     : { width: state.viewportSize.width || 1200, height: state.viewportSize.height || 800 };
   const editable = state.mode === 'edit';
-  const showSelectionLayer = editable && selectedNodes.length > 0 && (selectedNodes.length > 1 || primarySelected?.kind === 'group');
-  const showHandles = editable && !!primarySelected && primarySelected.kind !== 'group';
+  const showSelectionLayer = editable && selectedNodes.length > 1;
+  const showHandles = editable && !!primarySelected;
 
   return (
     <div
@@ -254,6 +254,20 @@ export default function SchemaCanvas() {
                 type: 'update-node',
                 id,
                 mutate: (node) => (node.kind === 'triangle' ? node : { ...node, rotation }),
+              })
+            }
+            onSetGroupScale={(id, scale) =>
+              dispatch({
+                type: 'update-node',
+                id,
+                mutate: (node) => (node.kind === 'group' ? { ...node, scale } : node),
+              })
+            }
+            onSetGroupRotation={(id, rotation) =>
+              dispatch({
+                type: 'update-node',
+                id,
+                mutate: (node) => (node.kind === 'group' ? { ...node, rotation } : node),
               })
             }
             onSetVertex={(id, index, worldPoint) =>

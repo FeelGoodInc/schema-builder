@@ -1,9 +1,11 @@
-import type { ChildNode, Pt, SchemaNode, Viewport } from '@/types/schema';
+import type { ChildNode, GroupNode, Pt, SchemaNode, Viewport } from '@/types/schema';
 
 export const MIN_SCALE = 0.1;
 export const MAX_SCALE = 20;
 export const MIN_NODE_SIZE = 8;
 export const MAX_NODE_SIZE = 4000;
+export const MIN_GROUP_SCALE = 0.05;
+export const MAX_GROUP_SCALE = 20;
 export const SNAP_STEP_DEG = 15;
 
 export const clamp = (value: number, min: number, max: number): number =>
@@ -133,7 +135,16 @@ export function boundsOfNode(node: SchemaNode): Bounds {
   if (node.kind === 'triangle') return boundsOfPoints(node.vertices);
 
   if (node.kind === 'group') {
-    return boundsOfRects(node.children.map(boundsOfNode));
+    const base = groupBaseBounds(node);
+    if (node.scale === 1 && node.rotation === 0) return base;
+    const pivot = { x: base.x + base.width / 2, y: base.y + base.height / 2 };
+    const corners: Pt[] = [
+      { x: base.x, y: base.y },
+      { x: base.x + base.width, y: base.y },
+      { x: base.x + base.width, y: base.y + base.height },
+      { x: base.x, y: base.y + base.height },
+    ].map((corner) => transformPoint(corner, pivot, node.scale, node.rotation));
+    return boundsOfPoints(corners);
   }
 
   const half = node.size / 2;
@@ -147,6 +158,43 @@ export function boundsOfNode(node: SchemaNode): Bounds {
     .map((offset) => ({ x: node.x + offset.x, y: node.y + offset.y }));
 
   return boundsOfPoints(corners);
+}
+
+export function groupBaseBounds(node: GroupNode): Bounds {
+  return boundsOfRects(node.children.map(boundsOfNode));
+}
+
+export function groupPivot(node: GroupNode): Pt {
+  const base = groupBaseBounds(node);
+  return { x: base.x + base.width / 2, y: base.y + base.height / 2 };
+}
+
+export function transformPoint(p: Pt, pivot: Pt, scale: number, degrees: number): Pt {
+  const scaled = { x: pivot.x + (p.x - pivot.x) * scale, y: pivot.y + (p.y - pivot.y) * scale };
+  return rotatePoint(scaled, pivot, (degrees * Math.PI) / 180);
+}
+
+export function bakeGroupTransform(node: GroupNode): ChildNode[] {
+  if (node.scale === 1 && node.rotation === 0) return node.children.map((child) => ({ ...child }));
+  const pivot = groupPivot(node);
+  return node.children.map((child) => {
+    if (child.kind === 'triangle') {
+      return {
+        ...child,
+        vertices: child.vertices.map((v) =>
+          transformPoint(v, pivot, node.scale, node.rotation)
+        ) as [Pt, Pt, Pt],
+      };
+    }
+    const position = transformPoint({ x: child.x, y: child.y }, pivot, node.scale, node.rotation);
+    return {
+      ...child,
+      x: position.x,
+      y: position.y,
+      size: clamp(child.size * node.scale, MIN_NODE_SIZE, MAX_NODE_SIZE),
+      rotation: normalizeDegrees(child.rotation + node.rotation),
+    };
+  });
 }
 
 export function anchorOf(node: SchemaNode): Pt {

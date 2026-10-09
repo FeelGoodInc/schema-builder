@@ -40,12 +40,14 @@ export interface GroupNode {
   id: string;
   kind: 'group';
   children: ChildNode[];
+  scale: number;
+  rotation: number;
 }
 
 export type SchemaNode = ChildNode | GroupNode;
 
 export interface SchemaDocument {
-  version: 3;
+  version: 4;
   nodes: SchemaNode[];
   viewport: Viewport;
 }

@@ -7,7 +7,7 @@ import type { IconLibKey, Pt, SchemaNode, Viewport } from '@/types/schema';
 import { ensureIconPack, getIconComponent } from '@/lib/iconsRegistry';
 import { getRegisteredComponent } from '@/lib/componentRegistry';
 import '@/lib/demoComponents';
-import { anchorOf, boundsOfNode, boundsOfPoints, screenToWorld, triangleLocalPoints } from '@/lib/transform';
+import { anchorOf, boundsOfPoints, groupBaseBounds, groupPivot, screenToWorld, triangleLocalPoints } from '@/lib/transform';
 import { startPointerDrag } from '@/lib/drag';
 
 export interface ActivateModifiers {
@@ -96,7 +96,10 @@ function NodeView({
     : {};
 
   if (node.kind === 'group') {
-    const bounds = boundsOfNode(node);
+    const base = groupBaseBounds(node);
+    const pivot = groupPivot(node);
+    const groupTransform =
+      `translate(${pivot.x}px, ${pivot.y}px) rotate(${node.rotation}deg) scale(${node.scale}) translate(${-pivot.x}px, ${-pivot.y}px)`;
     return (
       <div
         className="sb-node sb-node--group"
@@ -109,27 +112,40 @@ function NodeView({
           pointerEvents: 'none',
         }}
       >
-        {node.children.map((child) => (
-          <NodeView
-            key={child.id}
-            node={child}
-            viewport={viewport}
-            editable={false}
-            interactive={false}
-            toLocal={toLocal}
-            onMoveAnchor={onMoveAnchor}
-            onActivate={noop}
-          />
-        ))}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            transform: groupTransform,
+          }}
+        >
+          {node.children.map((child) => (
+            <NodeView
+              key={child.id}
+              node={child}
+              viewport={viewport}
+              editable={false}
+              interactive={false}
+              toLocal={toLocal}
+              onMoveAnchor={onMoveAnchor}
+              onActivate={noop}
+            />
+          ))}
+        </div>
         {interactive ? (
           <div
             className="sb-group-hit"
             style={{
               position: 'absolute',
-              left: bounds.x,
-              top: bounds.y,
-              width: bounds.width,
-              height: bounds.height,
+              left: base.x,
+              top: base.y,
+              width: base.width,
+              height: base.height,
+              transform: groupTransform,
+              transformOrigin: `${-base.x}px ${-base.y}px`,
               pointerEvents: 'auto',
               cursor: editable ? 'move' : 'pointer',
             }}
