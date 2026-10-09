@@ -16,17 +16,29 @@ function Workspace() {
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
 
       if (event.key === 'Escape') {
-        dispatch({ type: 'select', id: null });
+        dispatch({ type: 'select', ids: [] });
         return;
       }
-      if ((event.key === 'Delete' || event.key === 'Backspace') && state.selectedId) {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && state.selectedIds.length) {
         event.preventDefault();
-        dispatch({ type: 'remove-node', id: state.selectedId });
+        dispatch({ type: 'remove-selected' });
+        return;
+      }
+      if (state.mode === 'edit' && event.ctrlKey && event.key.toLowerCase() === 'g') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          const selectedGroup = state.nodes.find(
+            (node) => node.id === state.selectedIds[0] && node.kind === 'group' && state.selectedIds.length === 1
+          );
+          if (selectedGroup) dispatch({ type: 'ungroup', id: selectedGroup.id });
+        } else {
+          dispatch({ type: 'group-selected' });
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, state.selectedId]);
+  }, [dispatch, state.mode, state.nodes, state.selectedIds]);
 
   return (
     <div className="sb-app">
@@ -36,7 +48,7 @@ function Workspace() {
       <div className="sb-body">
         <div className="sb-canvas-wrap">
           <SchemaCanvas />
-          {state.mode === 'edit' && state.selectedId ? <NodeInspector /> : null}
+          {state.mode === 'edit' && state.selectedIds.length ? <NodeInspector /> : null}
         </div>
         {state.mode === 'edit' ? (
           <aside className="sb-side">

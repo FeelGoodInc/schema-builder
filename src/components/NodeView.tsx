@@ -7,13 +7,16 @@ import type { IconLibKey, Pt, SchemaNode, Viewport } from '@/types/schema';
 import { ensureIconPack, getIconComponent } from '@/lib/iconsRegistry';
 import { getRegisteredComponent } from '@/lib/componentRegistry';
 import '@/lib/demoComponents';
-import { boundsOfPoints, centroid, screenToWorld, triangleLocalPoints } from '@/lib/transform';
+import { anchorOf, boundsOfNode, boundsOfPoints, screenToWorld, triangleLocalPoints } from '@/lib/transform';
 import { startPointerDrag } from '@/lib/drag';
 
-export function anchorOf(node: SchemaNode): Pt {
-  if (node.kind === 'triangle') return centroid(node.vertices);
-  return { x: node.x, y: node.y };
+export interface ActivateModifiers {
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
 }
+
+const noop = () => {};
 
 function useIconComponent(lib: IconLibKey, name: string): IconType | undefined {
   const key = `${lib}/${name}`;
@@ -39,15 +42,17 @@ interface NodeViewProps {
   node: SchemaNode;
   viewport: Viewport;
   editable: boolean;
+  interactive?: boolean;
   toLocal: (clientX: number, clientY: number) => Pt;
   onMoveAnchor: (id: string, anchor: Pt) => void;
-  onActivate: (node: SchemaNode) => void;
+  onActivate: (node: SchemaNode, modifiers: ActivateModifiers) => void;
 }
 
 function NodeView({
   node,
   viewport,
   editable,
+  interactive = true,
   toLocal,
   onMoveAnchor,
   onActivate,
@@ -59,8 +64,9 @@ function NodeView({
   );
 
   const handlePointerDown = (event: ReactPointerEvent<Element>) => {
-    if (!editable || event.button !== 0) return;
+    if (!interactive || !editable || event.button !== 0) return;
     event.stopPropagation();
+    const modifiers = { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey };
     const anchor = anchorOf(node);
     const startWorld = screenToWorld(viewport, toLocal(event.clientX, event.clientY));
     const grabOffset = { x: startWorld.x - anchor.x, y: startWorld.y - anchor.y };
@@ -72,20 +78,67 @@ function NodeView({
         onMoveAnchor(node.id, { x: world.x - grabOffset.x, y: world.y - grabOffset.y });
       },
       onEnd: ({ moved }) => {
-        if (!moved) onActivate(node);
+        if (!moved) onActivate(node, modifiers);
       },
     });
   };
 
   const handleClick = (event: MouseEvent) => {
-    if (editable) return;
+    if (!interactive || editable) return;
     event.stopPropagation();
-    onActivate(node);
+    onActivate(node, { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey });
   };
 
-  const interactiveProps = editable
-    ? { onPointerDown: handlePointerDown }
-    : { onClick: handleClick };
+  const interactiveProps = interactive
+    ? editable
+      ? { onPointerDown: handlePointerDown }
+      : { onClick: handleClick }
+    : {};
+
+  if (node.kind === 'group') {
+    const bounds = boundsOfNode(node);
+    return (
+      <div
+        className="sb-node sb-node--group"
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          pointerEvents: 'none',
+        }}
+      >
+        {node.children.map((child) => (
+          <NodeView
+            key={child.id}
+            node={child}
+            viewport={viewport}
+            editable={false}
+            interactive={false}
+            toLocal={toLocal}
+            onMoveAnchor={onMoveAnchor}
+            onActivate={noop}
+          />
+        ))}
+        {interactive ? (
+          <div
+            className="sb-group-hit"
+            style={{
+              position: 'absolute',
+              left: bounds.x,
+              top: bounds.y,
+              width: bounds.width,
+              height: bounds.height,
+              pointerEvents: 'auto',
+              cursor: editable ? 'move' : 'pointer',
+            }}
+            {...interactiveProps}
+          />
+        ) : null}
+      </div>
+    );
+  }
 
   if (node.kind === 'triangle') {
     const bounds = boundsOfPoints(node.vertices);
@@ -115,7 +168,7 @@ function NodeView({
             stroke={node.stroke}
             strokeWidth={node.strokeWidth}
             strokeLinejoin="round"
-            style={{ pointerEvents: 'auto', cursor: editable ? 'move' : 'pointer' }}
+            style={{ pointerEvents: interactive ? 'auto' : 'none', cursor: editable ? 'move' : 'pointer' }}
             {...interactiveProps}
           />
         </svg>
@@ -133,6 +186,7 @@ function NodeView({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: interactive ? undefined : 'none',
     cursor: editable ? 'move' : 'pointer',
   };
 

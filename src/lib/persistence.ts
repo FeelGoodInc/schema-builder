@@ -1,4 +1,4 @@
-import type { IconLibKey, Pt, SchemaDocument, SchemaNode, TriangleNode } from '@/types/schema';
+import type { ChildNode, IconLibKey, Pt, SchemaDocument, SchemaNode, TriangleNode } from '@/types/schema';
 
 const ICON_LIBS: IconLibKey[] = ['md', 'gi', 'tb'];
 
@@ -34,29 +34,27 @@ export type ValidationResult =
   | { ok: true; document: SchemaDocument }
   | { ok: false; error: string };
 
-export function validateSchema(raw: unknown): ValidationResult {
-  if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'Файл не является объектом JSON' };
-  const doc = raw as Record<string, unknown>;
-  if (doc.version !== 2) return { ok: false, error: 'Неподдерживаемая версия схемы' };
-  if (!Array.isArray(doc.nodes)) return { ok: false, error: 'Отсутствует массив nodes' };
+type NodeValidation = { ok: true; node: SchemaNode } | { ok: false; error: string };
 
-  const nodes: SchemaNode[] = [];
-  for (let i = 0; i < doc.nodes.length; i += 1) {
-    const item = doc.nodes[i] as Record<string, unknown>;
-    const id = str(item?.id);
-    const kind = str(item?.kind);
-    if (!id || !kind) return { ok: false, error: `Узел ${i}: нет id или kind` };
+function validateNode(item: unknown, label: string, allowGroup: boolean): NodeValidation {
+  if (typeof item !== 'object' || item === null) return { ok: false, error: `${label}: не объект` };
+  const record = item as Record<string, unknown>;
+  const id = str(record.id);
+  const kind = str(record.kind);
+  if (!id || !kind) return { ok: false, error: `${label}: нет id или kind` };
 
-    if (kind === 'icon') {
-      const lib = str(item.lib) as IconLibKey | undefined;
-      const name = str(item.name);
-      const x = num(item.x);
-      const y = num(item.y);
-      const size = num(item.size);
-      if (!lib || !ICON_LIBS.includes(lib) || !name || x === undefined || y === undefined || size === undefined) {
-        return { ok: false, error: `Узел ${i}: некорректная иконка` };
-      }
-      nodes.push({
+  if (kind === 'icon') {
+    const lib = str(record.lib) as IconLibKey | undefined;
+    const name = str(record.name);
+    const x = num(record.x);
+    const y = num(record.y);
+    const size = num(record.size);
+    if (!lib || !ICON_LIBS.includes(lib) || !name || x === undefined || y === undefined || size === undefined) {
+      return { ok: false, error: `${label}: некорректная иконка` };
+    }
+    return {
+      ok: true,
+      node: {
         id,
         kind: 'icon',
         lib,
@@ -64,52 +62,87 @@ export function validateSchema(raw: unknown): ValidationResult {
         x,
         y,
         size,
-        rotation: num(item.rotation) ?? 0,
-      });
-      continue;
-    }
+        rotation: num(record.rotation) ?? 0,
+      },
+    };
+  }
 
-    if (kind === 'component') {
-      const ref = str(item.ref);
-      const x = num(item.x);
-      const y = num(item.y);
-      const size = num(item.size);
-      if (!ref || x === undefined || y === undefined || size === undefined) {
-        return { ok: false, error: `Узел ${i}: некорректный компонент` };
-      }
-      nodes.push({
+  if (kind === 'component') {
+    const ref = str(record.ref);
+    const x = num(record.x);
+    const y = num(record.y);
+    const size = num(record.size);
+    if (!ref || x === undefined || y === undefined || size === undefined) {
+      return { ok: false, error: `${label}: некорректный компонент` };
+    }
+    return {
+      ok: true,
+      node: {
         id,
         kind: 'component',
         ref,
         x,
         y,
         size,
-        rotation: num(item.rotation) ?? 0,
-      });
-      continue;
-    }
+        rotation: num(record.rotation) ?? 0,
+      },
+    };
+  }
 
-    if (kind === 'triangle') {
-      const rawVertices = item.vertices;
-      if (!Array.isArray(rawVertices) || rawVertices.length !== 3) {
-        return { ok: false, error: `Узел ${i}: треугольник должен иметь 3 вершины` };
-      }
-      const vertices = rawVertices.map(point) as [Pt, Pt, Pt];
-      if (vertices.some((v) => v === undefined)) {
-        return { ok: false, error: `Узел ${i}: некорректные координаты вершины` };
-      }
-      nodes.push({
+  if (kind === 'triangle') {
+    const rawVertices = record.vertices;
+    if (!Array.isArray(rawVertices) || rawVertices.length !== 3) {
+      return { ok: false, error: `${label}: треугольник должен иметь 3 вершины` };
+    }
+    const vertices = rawVertices.map(point) as [Pt, Pt, Pt];
+    if (vertices.some((v) => v === undefined)) {
+      return { ok: false, error: `${label}: некорректные координаты вершины` };
+    }
+    return {
+      ok: true,
+      node: {
         id,
         kind: 'triangle',
         vertices,
-        fill: str(item.fill) ?? '#5c6bc0',
-        stroke: str(item.stroke) ?? '#272e3a',
-        strokeWidth: num(item.strokeWidth) ?? 2,
-      } satisfies TriangleNode);
-      continue;
+        fill: str(record.fill) ?? '#5c6bc0',
+        stroke: str(record.stroke) ?? '#272e3a',
+        strokeWidth: num(record.strokeWidth) ?? 2,
+      } satisfies TriangleNode,
+    };
+  }
+
+  if (kind === 'group') {
+    if (!allowGroup) return { ok: false, error: `${label}: группа не может быть вложенной` };
+    const rawChildren = record.children;
+    if (!Array.isArray(rawChildren) || rawChildren.length < 2) {
+      return { ok: false, error: `${label}: группа должна содержать минимум 2 узла` };
     }
 
-    return { ok: false, error: `Узел ${i}: неизвестный kind "${kind}"` };
+    const children: ChildNode[] = [];
+    for (let i = 0; i < rawChildren.length; i += 1) {
+      const result = validateNode(rawChildren[i], `${label}.children[${i}]`, false);
+      if (!result.ok) return result;
+      if (result.node.kind === 'group') return { ok: false, error: `${label}.children[${i}]: группа не может быть вложенной` };
+      children.push(result.node);
+    }
+
+    return { ok: true, node: { id, kind: 'group', children } };
+  }
+
+  return { ok: false, error: `${label}: неизвестный kind "${kind}"` };
+}
+
+export function validateSchema(raw: unknown): ValidationResult {
+  if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'Файл не является объектом JSON' };
+  const doc = raw as Record<string, unknown>;
+  if (doc.version !== 2 && doc.version !== 3) return { ok: false, error: 'Неподдерживаемая версия схемы' };
+  if (!Array.isArray(doc.nodes)) return { ok: false, error: 'Отсутствует массив nodes' };
+
+  const nodes: SchemaNode[] = [];
+  for (let i = 0; i < doc.nodes.length; i += 1) {
+    const result = validateNode(doc.nodes[i], `Узел ${i}`, true);
+    if (!result.ok) return result;
+    nodes.push(result.node);
   }
 
   const viewportRaw = doc.viewport as Record<string, unknown> | undefined;
@@ -117,7 +150,7 @@ export function validateSchema(raw: unknown): ValidationResult {
   const tx = num(viewportRaw?.tx) ?? 0;
   const ty = num(viewportRaw?.ty) ?? 0;
 
-  return { ok: true, document: { version: 2, nodes, viewport: { scale, tx, ty } } };
+  return { ok: true, document: { version: 3, nodes, viewport: { scale, tx, ty } } };
 }
 
 export async function readSchemaFile(file: File): Promise<ValidationResult> {

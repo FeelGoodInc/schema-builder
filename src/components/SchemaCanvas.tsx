@@ -1,14 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { NewNode, Pt, SchemaNode } from '@/types/schema';
 import { useSchema } from '@/state/schemaStore';
 import { createNode } from '@/lib/nodes';
-import { centroid, screenToWorld } from '@/lib/transform';
+import { anchorOf, screenToWorld, translateNode } from '@/lib/transform';
 import { startPointerDrag, type DragSession } from '@/lib/drag';
-import NodeView from './NodeView';
+import NodeView, { type ActivateModifiers } from './NodeView';
 import HandlesLayer from './HandlesLayer';
+import SelectionLayer from './SelectionLayer';
 
 const DROP_MIME = 'application/x-schema-node';
 const ZOOM_STEP = 1.12;
@@ -25,6 +26,16 @@ export default function SchemaCanvas() {
     if (!rect) return { x: clientX, y: clientY };
     return { x: clientX - rect.left, y: clientY - rect.top };
   }, []);
+
+  const selectedNodes = useMemo(
+    () => state.nodes.filter((node) => state.selectedIds.includes(node.id)),
+    [state.nodes, state.selectedIds]
+  );
+  const primarySelected = selectedNodes.length === 1 ? selectedNodes[0] : null;
+  const selectedTriangleId = useMemo(() => {
+    if (state.mode !== 'edit' || selectedNodes.length !== 1) return null;
+    return selectedNodes[0].kind === 'triangle' ? selectedNodes[0].id : null;
+  }, [selectedNodes, state.mode]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -58,13 +69,13 @@ export default function SchemaCanvas() {
 
   useEffect(() => {
     const element = containerRef.current;
-    if (!element || state.mode !== 'edit' || !state.selectedId) return;
+    if (!element || !selectedTriangleId) return;
     const handlePointerMove = (event: PointerEvent) => {
       setPointer(toLocal(event.clientX, event.clientY));
     };
     element.addEventListener('pointermove', handlePointerMove);
     return () => element.removeEventListener('pointermove', handlePointerMove);
-  }, [state.mode, state.selectedId, toLocal]);
+  }, [selectedTriangleId, toLocal]);
 
   useEffect(() => {
     panMovedRef.current = false;
@@ -76,16 +87,8 @@ export default function SchemaCanvas() {
         type: 'update-node',
         id,
         mutate: (node) => {
-          if (node.kind === 'triangle') {
-            const current = centroid(node.vertices);
-            const dx = anchor.x - current.x;
-            const dy = anchor.y - current.y;
-            return {
-              ...node,
-              vertices: node.vertices.map((v) => ({ x: v.x + dx, y: v.y + dy })) as [Pt, Pt, Pt],
-            };
-          }
-          return { ...node, x: anchor.x, y: anchor.y };
+          const current = anchorOf(node);
+          return translateNode(node, anchor.x - current.x, anchor.y - current.y);
         },
       });
     },
@@ -93,9 +96,13 @@ export default function SchemaCanvas() {
   );
 
   const activateNode = useCallback(
-    (node: SchemaNode) => {
+    (node: SchemaNode, modifiers: ActivateModifiers) => {
       if (state.mode === 'edit') {
-        dispatch({ type: 'select', id: node.id });
+        if (modifiers.shiftKey || modifiers.ctrlKey || modifiers.metaKey) {
+          dispatch({ type: 'toggle-select', id: node.id });
+        } else {
+          dispatch({ type: 'select', ids: [node.id] });
+        }
         return;
       }
       if (panMovedRef.current) {
@@ -135,7 +142,7 @@ export default function SchemaCanvas() {
         panMovedRef.current = moved;
         panSessionRef.current = null;
         if (!moved && state.mode === 'edit') {
-          dispatch({ type: 'select', id: null });
+          dispatch({ type: 'select', ids: [] });
         }
       },
     });
@@ -161,12 +168,13 @@ export default function SchemaCanvas() {
     }
   };
 
-  const selectedNode = state.nodes.find((node) => node.id === state.selectedId) ?? null;
   const background = state.background;
   const world = background
     ? { width: background.width, height: background.height }
     : { width: state.viewportSize.width || 1200, height: state.viewportSize.height || 800 };
   const editable = state.mode === 'edit';
+  const showSelectionLayer = editable && selectedNodes.length > 0 && (selectedNodes.length > 1 || primarySelected?.kind === 'group');
+  const showHandles = editable && !!primarySelected && primarySelected.kind !== 'group';
 
   return (
     <div
@@ -225,10 +233,12 @@ export default function SchemaCanvas() {
         ))}
       </div>
 
-      {editable && selectedNode ? (
+      {showSelectionLayer || showHandles ? (
         <div className="sb-canvas-layer sb-handles-layer">
+          {showSelectionLayer ? <SelectionLayer nodes={selectedNodes} viewport={state.viewport} /> : null}
+          {showHandles && primarySelected ? (
           <HandlesLayer
-            node={selectedNode}
+            node={primarySelected}
             viewport={state.viewport}
             toLocal={toLocal}
             pointer={pointer}
@@ -269,6 +279,7 @@ export default function SchemaCanvas() {
               })
             }
           />
+          ) : null}
         </div>
       ) : null}
 

@@ -22,6 +22,10 @@ export default function Toolbar() {
     y: (state.viewportSize.height / 2 - state.viewport.ty) / state.viewport.scale,
   });
 
+  const selectedNodes = state.nodes.filter((node) => state.selectedIds.includes(node.id));
+  const canGroup = state.mode === 'edit' && selectedNodes.length >= 2 && selectedNodes.every((node) => node.kind !== 'group');
+  const selectedGroup = selectedNodes.length === 1 && selectedNodes[0].kind === 'group' ? selectedNodes[0] : null;
+
   const handleBackgroundFile = async (file: File | undefined) => {
     if (!file) return;
     if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
@@ -99,7 +103,22 @@ export default function Toolbar() {
         </Button>
         <Button
           size="sm"
-          onClick={() => downloadSchema({ version: 2, nodes: state.nodes, viewport: state.viewport })}
+          appearance="primary"
+          disabled={!canGroup}
+          onClick={() => dispatch({ type: 'group-selected' })}
+        >
+          Сгруппировать
+        </Button>
+        <Button
+          size="sm"
+          disabled={!selectedGroup}
+          onClick={() => selectedGroup && dispatch({ type: 'ungroup', id: selectedGroup.id })}
+        >
+          Разгруппировать
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => downloadSchema({ version: 3, nodes: state.nodes, viewport: state.viewport })}
         >
           Экспорт схемы
         </Button>

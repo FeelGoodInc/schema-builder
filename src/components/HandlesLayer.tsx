@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { Pt, SchemaNode, TriangleNode, Viewport } from '@/types/schema';
+import type { ChildNode, Pt, TriangleNode, Viewport } from '@/types/schema';
 import { startPointerDrag } from '@/lib/drag';
 import {
   MAX_NODE_SIZE,
@@ -22,7 +22,7 @@ const ROTATE_OFFSET = 26;
 const TRIANGLE_PIN_DISTANCE = 28;
 
 interface HandlesLayerProps {
-  node: SchemaNode;
+  node: ChildNode;
   viewport: Viewport;
   toLocal: (clientX: number, clientY: number) => Pt;
   pointer: Pt | null;

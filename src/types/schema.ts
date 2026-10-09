@@ -34,10 +34,18 @@ export interface TriangleNode {
   strokeWidth: number;
 }
 
-export type SchemaNode = IconNode | CustomComponentNode | TriangleNode;
+export type ChildNode = IconNode | CustomComponentNode | TriangleNode;
+
+export interface GroupNode {
+  id: string;
+  kind: 'group';
+  children: ChildNode[];
+}
+
+export type SchemaNode = ChildNode | GroupNode;
 
 export interface SchemaDocument {
-  version: 2;
+  version: 3;
   nodes: SchemaNode[];
   viewport: Viewport;
 }

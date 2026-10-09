@@ -1,4 +1,4 @@
-import type { Pt, Viewport } from '@/types/schema';
+import type { ChildNode, Pt, SchemaNode, Viewport } from '@/types/schema';
 
 export const MIN_SCALE = 0.1;
 export const MAX_SCALE = 20;
@@ -111,4 +111,67 @@ export function nodeScreenFrame(
 
 export function triangleLocalPoints(vertices: Pt[], origin: Pt): Pt[] {
   return vertices.map((v) => ({ x: v.x - origin.x, y: v.y - origin.y }));
+}
+
+export interface Bounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export function boundsOfRects(rects: Bounds[]): Bounds {
+  if (!rects.length) return { x: 0, y: 0, width: 1, height: 1 };
+  const minX = Math.min(...rects.map((r) => r.x));
+  const minY = Math.min(...rects.map((r) => r.y));
+  const maxX = Math.max(...rects.map((r) => r.x + r.width));
+  const maxY = Math.max(...rects.map((r) => r.y + r.height));
+  return { x: minX, y: minY, width: Math.max(maxX - minX, 1), height: Math.max(maxY - minY, 1) };
+}
+
+export function boundsOfNode(node: SchemaNode): Bounds {
+  if (node.kind === 'triangle') return boundsOfPoints(node.vertices);
+
+  if (node.kind === 'group') {
+    return boundsOfRects(node.children.map(boundsOfNode));
+  }
+
+  const half = node.size / 2;
+  const corners: Pt[] = [
+    { x: -half, y: -half },
+    { x: half, y: -half },
+    { x: half, y: half },
+    { x: -half, y: half },
+  ]
+    .map((offset) => rotateOffset(offset, node.rotation))
+    .map((offset) => ({ x: node.x + offset.x, y: node.y + offset.y }));
+
+  return boundsOfPoints(corners);
+}
+
+export function anchorOf(node: SchemaNode): Pt {
+  if (node.kind === 'triangle') return centroid(node.vertices);
+  if (node.kind === 'group') {
+    const bounds = boundsOfNode(node);
+    return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  }
+  return { x: node.x, y: node.y };
+}
+
+export function translateNode(node: SchemaNode, dx: number, dy: number): SchemaNode {
+  if (node.kind === 'triangle') {
+    return {
+      ...node,
+      vertices: node.vertices.map((v) => ({ x: v.x + dx, y: v.y + dy })) as [Pt, Pt, Pt],
+    };
+  }
+
+  if (node.kind === 'group') {
+    return {
+      ...node,
+      children: node.children.map((child) => translateNode(child, dx, dy)) as ChildNode[],
+    };
+  }
+
+  return { ...node, x: node.x + dx, y: node.y + dy };
 }

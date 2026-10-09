@@ -20,7 +20,58 @@ const COLORS = [
 
 export default function NodeInspector() {
   const { state, dispatch } = useSchema();
-  const node = state.nodes.find((item) => item.id === state.selectedId);
+  const selectedNodes = state.nodes.filter((item) => state.selectedIds.includes(item.id));
+
+  if (!selectedNodes.length) return null;
+
+  const canGroup = selectedNodes.length >= 2 && selectedNodes.every((item) => item.kind !== 'group');
+
+  if (selectedNodes.length > 1) {
+    return (
+      <div className="sb-inspector">
+        <Panel bordered header={`Выбрано узлов: ${selectedNodes.length}`}>
+          <VStack spacing={10}>
+            <ButtonToolbar>
+              <Button size="sm" appearance="primary" disabled={!canGroup} onClick={() => dispatch({ type: 'group-selected' })}>
+                Сгруппировать
+              </Button>
+              <Button size="sm" color="red" onClick={() => dispatch({ type: 'remove-selected' })}>
+                Удалить выбранные
+              </Button>
+            </ButtonToolbar>
+          </VStack>
+        </Panel>
+      </div>
+    );
+  }
+
+  const node = selectedNodes[0];
+
+  if (node.kind === 'group') {
+    return (
+      <div className="sb-inspector">
+        <Panel bordered header="Свойства: group">
+          <VStack spacing={10}>
+            <div>Дочерних узлов: {node.children.length}</div>
+            <ButtonToolbar>
+              <Button size="sm" appearance="primary" onClick={() => dispatch({ type: 'ungroup', id: node.id })}>
+                Разгруппировать
+              </Button>
+              <Button size="sm" onClick={() => dispatch({ type: 'reorder', id: node.id, to: 'front' })}>
+                На передний план
+              </Button>
+              <Button size="sm" onClick={() => dispatch({ type: 'reorder', id: node.id, to: 'back' })}>
+                На задний план
+              </Button>
+              <Button size="sm" color="red" onClick={() => dispatch({ type: 'remove-node', id: node.id })}>
+                Удалить группу
+              </Button>
+            </ButtonToolbar>
+          </VStack>
+        </Panel>
+      </div>
+    );
+  }
 
   const iconOptions = ICON_LIBS.flatMap((lib) =>
     getCachedIconNames(lib).map((name) => ({ label: `${lib}/${name}`, value: `${lib}/${name}` }))
@@ -30,8 +81,6 @@ export default function NodeInspector() {
     label: `${meta.title} (${meta.id})`,
     value: meta.id,
   }));
-
-  if (!node) return null;
 
   const update = (mutate: (current: SchemaNode) => SchemaNode) =>
     dispatch({ type: 'update-node', id: node.id, mutate });

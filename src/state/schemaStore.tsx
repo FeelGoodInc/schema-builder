@@ -11,7 +11,9 @@ import {
 } from 'react';
 import type {
   BackgroundImage,
+  ChildNode,
   EditorMode,
+  GroupNode,
   Pt,
   SchemaDocument,
   SchemaNode,
@@ -24,7 +26,7 @@ export interface SchemaState {
   nodes: SchemaNode[];
   viewport: Viewport;
   background: BackgroundImage | null;
-  selectedId: string | null;
+  selectedIds: string[];
   viewportSize: { width: number; height: number };
 }
 
@@ -38,7 +40,11 @@ export type SchemaAction =
   | { type: 'add-node'; node: SchemaNode }
   | { type: 'update-node'; id: string; mutate: (node: SchemaNode) => SchemaNode }
   | { type: 'remove-node'; id: string }
-  | { type: 'select'; id: string | null }
+  | { type: 'remove-selected' }
+  | { type: 'select'; ids: string[] }
+  | { type: 'toggle-select'; id: string }
+  | { type: 'group-selected' }
+  | { type: 'ungroup'; id: string }
   | { type: 'reorder'; id: string; to: 'front' | 'back' }
   | { type: 'set-background'; background: BackgroundImage | null }
   | { type: 'import'; document: SchemaDocument }
@@ -49,7 +55,7 @@ export const initialState: SchemaState = {
   nodes: [],
   viewport: { scale: 1, tx: 0, ty: 0 },
   background: null,
-  selectedId: null,
+  selectedIds: [],
   viewportSize: { width: 0, height: 0 },
 };
 
@@ -61,7 +67,7 @@ export function worldSizeOf(state: SchemaState): { width: number; height: number
 function reducer(state: SchemaState, action: SchemaAction): SchemaState {
   switch (action.type) {
     case 'set-mode':
-      return { ...state, mode: action.mode, selectedId: null };
+      return { ...state, mode: action.mode, selectedIds: [] };
 
     case 'set-viewport-size':
       if (state.viewportSize.width === action.width && state.viewportSize.height === action.height) {
@@ -82,7 +88,7 @@ function reducer(state: SchemaState, action: SchemaAction): SchemaState {
       return { ...state, viewport: panBy(state.viewport, action.delta) };
 
     case 'add-node':
-      return { ...state, nodes: [...state.nodes, action.node], selectedId: action.node.id };
+      return { ...state, nodes: [...state.nodes, action.node], selectedIds: [action.node.id] };
 
     case 'update-node': {
       let changed = false;
@@ -94,15 +100,63 @@ function reducer(state: SchemaState, action: SchemaAction): SchemaState {
       return changed ? { ...state, nodes } : state;
     }
 
-    case 'remove-node':
+    case 'remove-node': {
+      const nodes = state.nodes.filter((node) => node.id !== action.id);
       return {
         ...state,
-        nodes: state.nodes.filter((node) => node.id !== action.id),
-        selectedId: state.selectedId === action.id ? null : state.selectedId,
+        nodes,
+        selectedIds: state.selectedIds.filter((id) => nodes.some((node) => node.id === id)),
       };
+    }
 
-    case 'select':
-      return { ...state, selectedId: action.id };
+    case 'remove-selected': {
+      const selected = new Set(state.selectedIds);
+      return { ...state, nodes: state.nodes.filter((node) => !selected.has(node.id)), selectedIds: [] };
+    }
+
+    case 'select': {
+      const ids = action.ids.filter((id) => state.nodes.some((node) => node.id === id));
+      return { ...state, selectedIds: Array.from(new Set(ids)) };
+    }
+
+    case 'toggle-select': {
+      if (!state.nodes.some((node) => node.id === action.id)) return state;
+      const selectedIds = state.selectedIds.includes(action.id)
+        ? state.selectedIds.filter((id) => id !== action.id)
+        : [...state.selectedIds, action.id];
+      return { ...state, selectedIds };
+    }
+
+    case 'group-selected': {
+      const selected = new Set(state.selectedIds);
+      const selectedNodes = state.nodes.filter((node) => selected.has(node.id));
+      if (selectedNodes.length !== selected.size || selectedNodes.length < 2) return state;
+      if (selectedNodes.some((node) => node.kind === 'group')) return state;
+
+      const insertAt = Math.min(
+        ...state.nodes.reduce<number[]>((acc, node, index) => (selected.has(node.id) ? [...acc, index] : acc), [])
+      );
+      const group: GroupNode = {
+        id: createNodeId(),
+        kind: 'group',
+        children: selectedNodes as ChildNode[],
+      };
+      const nodes = state.nodes.filter((node) => !selected.has(node.id));
+      nodes.splice(insertAt, 0, group);
+      return { ...state, nodes, selectedIds: [group.id] };
+    }
+
+    case 'ungroup': {
+      const index = state.nodes.findIndex((node) => node.id === action.id && node.kind === 'group');
+      if (index < 0) return state;
+      const group = state.nodes[index] as GroupNode;
+      const nodes = [
+        ...state.nodes.slice(0, index),
+        ...group.children,
+        ...state.nodes.slice(index + 1),
+      ];
+      return { ...state, nodes, selectedIds: group.children.map((node) => node.id) };
+    }
 
     case 'reorder': {
       const node = state.nodes.find((item) => item.id === action.id);
@@ -119,11 +173,11 @@ function reducer(state: SchemaState, action: SchemaAction): SchemaState {
         ...state,
         nodes: action.document.nodes,
         viewport: { ...action.document.viewport, scale: clampScale(action.document.viewport.scale) },
-        selectedId: null,
+        selectedIds: [],
       };
 
     case 'clear-nodes':
-      return { ...state, nodes: [], selectedId: null };
+      return { ...state, nodes: [], selectedIds: [] };
 
     default:
       return state;
