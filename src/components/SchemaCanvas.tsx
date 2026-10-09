@@ -6,7 +6,7 @@ import type { NewNode, Pt, SchemaNode } from '@/types/schema';
 import { useSchema } from '@/state/schemaStore';
 import { createNode } from '@/lib/nodes';
 import { centroid, screenToWorld } from '@/lib/transform';
-import { startPointerDrag } from '@/lib/drag';
+import { startPointerDrag, type DragSession } from '@/lib/drag';
 import NodeView from './NodeView';
 import HandlesLayer from './HandlesLayer';
 
@@ -16,6 +16,9 @@ const ZOOM_STEP = 1.12;
 export default function SchemaCanvas() {
   const { state, dispatch } = useSchema();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const panMovedRef = useRef(false);
+  const panSessionRef = useRef<DragSession | null>(null);
+  const [panning, setPanning] = useState(false);
 
   const toLocal = useCallback((clientX: number, clientY: number): Pt => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -63,6 +66,10 @@ export default function SchemaCanvas() {
     return () => element.removeEventListener('pointermove', handlePointerMove);
   }, [state.mode, state.selectedId, toLocal]);
 
+  useEffect(() => {
+    panMovedRef.current = false;
+  }, [state.mode]);
+
   const moveNode = useCallback(
     (id: string, anchor: Pt) => {
       dispatch({
@@ -91,27 +98,45 @@ export default function SchemaCanvas() {
         dispatch({ type: 'select', id: node.id });
         return;
       }
+      if (panMovedRef.current) {
+        panMovedRef.current = false;
+        return;
+      }
       console.log('[schema:view]', node);
     },
     [dispatch, state.mode]
   );
 
-  const handleBackgroundPointerDown = (event: ReactPointerEvent<SVGRectElement>) => {
-    const panEnabled = event.button === 1 || (event.button === 0 && event.altKey);
-    if (!panEnabled) {
-      dispatch({ type: 'select', id: null });
-      return;
-    }
-    event.preventDefault();
+  const handleCanvasPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 && event.button !== 1) return;
+
+    const target = event.target as Element;
+    if (target.closest('.sb-handle')) return;
+    if (state.mode === 'edit' && target.closest('.sb-node')) return;
+
+    if (event.button === 1) event.preventDefault();
     event.stopPropagation();
+
+    panMovedRef.current = false;
+    setPanning(true);
+
     const start = toLocal(event.clientX, event.clientY);
     let previous = start;
-    startPointerDrag({
+    panSessionRef.current = startPointerDrag({
       event,
+      capture: false,
       onMove: (client) => {
         const current = toLocal(client.x, client.y);
         dispatch({ type: 'pan', delta: { x: current.x - previous.x, y: current.y - previous.y } });
         previous = current;
+      },
+      onEnd: ({ moved }) => {
+        setPanning(false);
+        panMovedRef.current = moved;
+        panSessionRef.current = null;
+        if (!moved && state.mode === 'edit') {
+          dispatch({ type: 'select', id: null });
+        }
       },
     });
   };
@@ -146,7 +171,8 @@ export default function SchemaCanvas() {
   return (
     <div
       ref={containerRef}
-      className="sb-canvas"
+      className={panning ? 'sb-canvas sb-canvas--panning' : 'sb-canvas'}
+      onPointerDown={handleCanvasPointerDown}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -176,8 +202,7 @@ export default function SchemaCanvas() {
           width="100%"
           height="100%"
           fill="transparent"
-          style={{ cursor: 'default' }}
-          onPointerDown={handleBackgroundPointerDown}
+          className="sb-canvas-hit"
         />
       </svg>
 

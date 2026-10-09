@@ -61,6 +61,17 @@ body {
   overflow: hidden;
   background: #f7f9fb;
   touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.sb-canvas-hit {
+  cursor: inherit;
+}
+
+.sb-canvas--panning,
+.sb-canvas--panning * {
+  cursor: grabbing !important;
 }
 
 .sb-canvas-layer {

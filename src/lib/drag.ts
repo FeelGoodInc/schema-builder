@@ -9,11 +9,13 @@ export function startPointerDrag(options: {
   event: ReactPointerEvent<Element>;
   onMove: (client: Pt, native: PointerEvent) => void;
   onEnd?: (info: { moved: boolean }) => void;
+  capture?: boolean;
 }): DragSession {
-  const { event, onMove, onEnd } = options;
+  const { event, onMove, onEnd, capture = true } = options;
   const target = event.currentTarget as Element;
   const pointerId = event.pointerId;
   const start = { x: event.clientX, y: event.clientY };
+  const source: EventTarget = capture ? target : window;
   let moved = false;
   let finished = false;
 
@@ -28,17 +30,17 @@ export function startPointerDrag(options: {
   const handleFinish = () => {
     if (finished) return;
     finished = true;
-    target.removeEventListener('pointermove', handleMove);
-    target.removeEventListener('pointerup', handleFinish);
-    target.removeEventListener('pointercancel', handleFinish);
-    if (target.hasPointerCapture?.(pointerId)) target.releasePointerCapture(pointerId);
+    source.removeEventListener('pointermove', handleMove);
+    source.removeEventListener('pointerup', handleFinish);
+    source.removeEventListener('pointercancel', handleFinish);
+    if (capture && target.hasPointerCapture?.(pointerId)) target.releasePointerCapture(pointerId);
     onEnd?.({ moved });
   };
 
-  target.setPointerCapture?.(pointerId);
-  target.addEventListener('pointermove', handleMove);
-  target.addEventListener('pointerup', handleFinish);
-  target.addEventListener('pointercancel', handleFinish);
+  if (capture) target.setPointerCapture?.(pointerId);
+  source.addEventListener('pointermove', handleMove);
+  source.addEventListener('pointerup', handleFinish);
+  source.addEventListener('pointercancel', handleFinish);
 
   return { cancel: handleFinish };
 }

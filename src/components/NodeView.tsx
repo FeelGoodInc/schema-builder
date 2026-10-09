@@ -59,7 +59,7 @@ function NodeView({
   );
 
   const handlePointerDown = (event: ReactPointerEvent<Element>) => {
-    if (!editable) return;
+    if (!editable || event.button !== 0) return;
     event.stopPropagation();
     const anchor = anchorOf(node);
     const startWorld = screenToWorld(viewport, toLocal(event.clientX, event.clientY));
