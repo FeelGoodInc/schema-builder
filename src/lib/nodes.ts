@@ -1,6 +1,5 @@
-import type { IconLibKey, NewNode, Pt, SchemaNode } from '@/types/schema';
+import type { NewNode, Pt, SchemaNode } from '@/types/schema';
 import { createNodeId } from '@/state/schemaStore';
-import { getRegisteredComponent } from './componentRegistry';
 
 export const DEFAULT_ICON_SIZE = 64;
 export const DEFAULT_TRIANGLE_SIDE = 140;
@@ -26,27 +25,13 @@ export function createNode(spec: NewNode): SchemaNode {
     };
   }
 
-  if (spec.kind === 'icon') {
-    return {
-      id: createNodeId(),
-      kind: 'icon',
-      lib: spec.lib as IconLibKey,
-      name: spec.name,
-      x: spec.x,
-      y: spec.y,
-      size: DEFAULT_ICON_SIZE,
-      rotation: 0,
-    };
-  }
-
-  const registered = getRegisteredComponent(spec.ref);
   return {
     id: createNodeId(),
-    kind: 'component',
-    ref: spec.ref,
+    kind: 'item',
+    alias: spec.alias,
     x: spec.x,
     y: spec.y,
-    size: registered?.meta.defaultSize ?? DEFAULT_ICON_SIZE,
+    size: spec.size ?? DEFAULT_ICON_SIZE,
     rotation: 0,
   };
 }

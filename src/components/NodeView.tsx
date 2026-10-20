@@ -1,12 +1,10 @@
 'use client';
 
-import { createElement, memo, useEffect, useState } from 'react';
+import { memo } from 'react';
 import type { CSSProperties, MouseEvent, PointerEvent as ReactPointerEvent } from 'react';
-import type { IconType } from 'react-icons';
-import type { IconLibKey, Pt, SchemaNode, Viewport } from '@/types/schema';
-import { ensureIconPack, getIconComponent } from '@/lib/iconsRegistry';
-import { getRegisteredComponent } from '@/lib/componentRegistry';
-import '@/lib/demoComponents';
+import type { CustomData, Pt, SchemaNode, Viewport } from '@/types/schema';
+import { useBuilderConfig } from '@/state/schemaStore';
+import { itemDataOf } from '@/lib/itemData';
 import { anchorOf, boundsOfPoints, groupBaseBounds, groupPivot, screenToWorld, triangleLocalPoints } from '@/lib/transform';
 import { startPointerDrag } from '@/lib/drag';
 
@@ -17,26 +15,7 @@ export interface ActivateModifiers {
 }
 
 const noop = () => {};
-
-function useIconComponent(lib: IconLibKey, name: string): IconType | undefined {
-  const key = `${lib}/${name}`;
-  const cached = getIconComponent(lib, name);
-  const [resolved, setResolved] = useState<{ key: string; component?: IconType }>({ key: '' });
-
-  useEffect(() => {
-    if (cached || !name) return;
-    let active = true;
-    void ensureIconPack(lib).then((pack) => {
-      if (active) setResolved({ key, component: pack[name] });
-    });
-    return () => {
-      active = false;
-    };
-  }, [cached, key, lib, name]);
-
-  if (!name) return undefined;
-  return cached ?? (resolved.key === key ? resolved.component : undefined);
-}
+const noopCustomData = noop;
 
 interface NodeViewProps {
   node: SchemaNode;
@@ -46,6 +25,7 @@ interface NodeViewProps {
   toLocal: (clientX: number, clientY: number) => Pt;
   onMoveAnchor: (id: string, anchor: Pt) => void;
   onActivate: (node: SchemaNode, modifiers: ActivateModifiers) => void;
+  onUpdateCustomData: (id: string, data: CustomData) => void;
 }
 
 function NodeView({
@@ -56,12 +36,9 @@ function NodeView({
   toLocal,
   onMoveAnchor,
   onActivate,
+  onUpdateCustomData,
 }: NodeViewProps) {
-  const isIcon = node.kind === 'icon';
-  const Icon = useIconComponent(
-    isIcon ? node.lib : 'md',
-    isIcon ? node.name : ''
-  );
+  const config = useBuilderConfig();
 
   const handlePointerDown = (event: ReactPointerEvent<Element>) => {
     if (!interactive || !editable || event.button !== 0) return;
@@ -132,6 +109,7 @@ function NodeView({
               toLocal={toLocal}
               onMoveAnchor={onMoveAnchor}
               onActivate={noop}
+              onUpdateCustomData={noopCustomData}
             />
           ))}
         </div>
@@ -206,20 +184,23 @@ function NodeView({
     cursor: editable ? 'move' : 'pointer',
   };
 
-  if (node.kind === 'icon') {
-    return (
-      <div className="sb-node" style={frameStyle} {...interactiveProps}>
-        {Icon ? createElement(Icon, { size: node.size }) : <UnknownNode label={node.name} size={node.size} />}
-      </div>
-    );
-  }
-
-  const registered = getRegisteredComponent(node.ref);
-  const CustomComponent = registered?.component;
+  const available = config.findItem(node.alias);
+  const CustomComponent = available?.component;
+  const Icon = available?.icon;
 
   return (
     <div className="sb-node" style={frameStyle} {...interactiveProps}>
-      {CustomComponent ? createElement(CustomComponent, { size: node.size }) : <UnknownNode label={node.ref} size={node.size} />}
+      {CustomComponent ? (
+        <CustomComponent
+          size={node.size}
+          item={itemDataOf(node)}
+          updateCustomData={(next) => onUpdateCustomData(node.id, next)}
+        />
+      ) : Icon ? (
+        <Icon size={node.size} />
+      ) : (
+        <UnknownNode label={node.alias} size={node.size} />
+      )}
     </div>
   );
 }

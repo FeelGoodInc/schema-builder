@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { NewNode, Pt, SchemaNode } from '@/types/schema';
-import { useSchema } from '@/state/schemaStore';
+import { useBuilderConfig, useSchema } from '@/state/schemaStore';
+import { itemDataOf } from '@/lib/itemData';
 import { createNode } from '@/lib/nodes';
 import { anchorOf, screenToWorld, translateNode } from '@/lib/transform';
 import { startPointerDrag, type DragSession } from '@/lib/drag';
@@ -15,7 +16,8 @@ const DROP_MIME = 'application/x-schema-node';
 const ZOOM_STEP = 1.12;
 
 export default function SchemaCanvas() {
-  const { state, dispatch } = useSchema();
+  const { state, dispatch, updateCustomData } = useSchema();
+  const config = useBuilderConfig();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const panMovedRef = useRef(false);
   const panSessionRef = useRef<DragSession | null>(null);
@@ -109,9 +111,11 @@ export default function SchemaCanvas() {
         panMovedRef.current = false;
         return;
       }
-      console.log('[schema:view]', node);
+      const itemData = itemDataOf(node);
+      const handler = config.current.onItemClick ?? config.findItem(itemData.alias)?.onClick;
+      handler?.(itemData);
     },
-    [dispatch, state.mode]
+    [config, dispatch, state.mode]
   );
 
   const handleCanvasPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -229,6 +233,7 @@ export default function SchemaCanvas() {
             toLocal={toLocal}
             onMoveAnchor={moveNode}
             onActivate={activateNode}
+            onUpdateCustomData={updateCustomData}
           />
         ))}
       </div>

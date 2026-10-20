@@ -1,11 +1,9 @@
 'use client';
 
 import { Button, ButtonToolbar, InputPicker, NumberInput, Panel, VStack } from 'rsuite';
-import { useSchema } from '@/state/schemaStore';
-import { ICON_LIBS, getCachedIconNames } from '@/lib/iconsRegistry';
-import { listRegisteredComponents } from '@/lib/componentRegistry';
+import { useBuilderConfig, useSchema } from '@/state/schemaStore';
 import { MAX_GROUP_SCALE, MAX_NODE_SIZE, MIN_GROUP_SCALE, MIN_NODE_SIZE } from '@/lib/transform';
-import type { IconLibKey, SchemaNode, TriangleNode } from '@/types/schema';
+import type { SchemaNode, TriangleNode } from '@/types/schema';
 
 const COLORS = [
   '#5c6bc0',
@@ -20,6 +18,7 @@ const COLORS = [
 
 export default function NodeInspector() {
   const { state, dispatch } = useSchema();
+  const config = useBuilderConfig();
   const selectedNodes = state.nodes.filter((item) => state.selectedIds.includes(item.id));
 
   if (!selectedNodes.length) return null;
@@ -105,13 +104,9 @@ export default function NodeInspector() {
     );
   }
 
-  const iconOptions = ICON_LIBS.flatMap((lib) =>
-    getCachedIconNames(lib).map((name) => ({ label: `${lib}/${name}`, value: `${lib}/${name}` }))
-  );
-
-  const componentOptions = listRegisteredComponents().map((meta) => ({
-    label: `${meta.title} (${meta.id})`,
-    value: meta.id,
+  const itemOptions = config.current.availableItems.map((item) => ({
+    label: `${item.title} (${item.alias})`,
+    value: item.alias,
   }));
 
   const update = (mutate: (current: SchemaNode) => SchemaNode) =>
@@ -153,35 +148,17 @@ export default function NodeInspector() {
                 }}
               />
               <InputPicker
-                label="Заменить на иконку"
+                label="Заменить на элемент"
                 searchable
                 virtualized
-                data={iconOptions}
-                value={node.kind === 'icon' ? `${node.lib}/${node.name}` : undefined}
+                data={itemOptions}
+                value={node.kind === 'item' ? node.alias : undefined}
                 onChange={(value) => {
-                  const raw = String(value ?? '');
-                  const [lib, name] = raw.split('/');
-                  if (!lib || !name) return;
+                  const alias = String(value ?? '');
+                  if (!alias) return;
                   update((current) => {
-                    if (current.kind === 'icon') return { ...current, lib: lib as IconLibKey, name };
-                    if (current.kind === 'component') {
-                      return { ...current, kind: 'icon', lib: lib as IconLibKey, name };
-                    }
-                    return current;
-                  });
-                }}
-              />
-              <InputPicker
-                label="Заменить на компонент"
-                data={componentOptions}
-                value={node.kind === 'component' ? node.ref : undefined}
-                onChange={(value) => {
-                  const ref = String(value ?? '');
-                  if (!ref) return;
-                  update((current) => {
-                    if (current.kind === 'icon') return { ...current, kind: 'component', ref };
-                    if (current.kind === 'component') return { ...current, ref };
-                    return current;
+                    if (current.kind !== 'item' || current.alias === alias) return current;
+                    return { ...current, alias, customData: undefined };
                   });
                 }}
               />

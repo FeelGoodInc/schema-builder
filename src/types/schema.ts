@@ -4,7 +4,7 @@ export type Viewport = { scale: number; tx: number; ty: number };
 
 export type EditorMode = 'edit' | 'view';
 
-export type IconLibKey = 'md' | 'gi' | 'tb';
+export type CustomData = Record<string, unknown>;
 
 export interface NodeBase {
   id: string;
@@ -14,15 +14,10 @@ export interface NodeBase {
   rotation: number;
 }
 
-export interface IconNode extends NodeBase {
-  kind: 'icon';
-  lib: IconLibKey;
-  name: string;
-}
-
-export interface CustomComponentNode extends NodeBase {
-  kind: 'component';
-  ref: string;
+export interface ItemNode extends NodeBase {
+  kind: 'item';
+  alias: string;
+  customData?: CustomData;
 }
 
 export interface TriangleNode {
@@ -34,7 +29,7 @@ export interface TriangleNode {
   strokeWidth: number;
 }
 
-export type ChildNode = IconNode | CustomComponentNode | TriangleNode;
+export type ChildNode = ItemNode | TriangleNode;
 
 export interface GroupNode {
   id: string;
@@ -47,7 +42,7 @@ export interface GroupNode {
 export type SchemaNode = ChildNode | GroupNode;
 
 export interface SchemaDocument {
-  version: 4;
+  version: 5;
   nodes: SchemaNode[];
   viewport: Viewport;
 }
@@ -59,9 +54,6 @@ export interface BackgroundImage {
   name: string;
 }
 
-export type IconDescriptor = { lib: IconLibKey; name: string };
-
 export type NewNode =
-  | { kind: 'icon'; lib: IconLibKey; name: string; x: number; y: number }
-  | { kind: 'component'; ref: string; x: number; y: number }
+  | { kind: 'item'; alias: string; x: number; y: number; size?: number }
   | { kind: 'triangle'; x: number; y: number };

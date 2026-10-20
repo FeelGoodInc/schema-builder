@@ -203,22 +203,19 @@ body {
   color: #1677ff;
 }
 
-.sb-component-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.sb-icon-tile--text {
+  padding: 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+  overflow: hidden;
 }
 
-.sb-component-item {
-  padding: 8px 10px;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  background: #fbfdff;
-  cursor: grab;
-}
-
-.sb-component-item:hover {
-  border-color: #1677ff;
+.sb-icon-tile--text span {
+  display: block;
+  max-height: 100%;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .sb-panel-hint {

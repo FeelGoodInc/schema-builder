@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { Button, ButtonToolbar, Message, SegmentedControl, toaster } from 'rsuite';
-import { useSchema } from '@/state/schemaStore';
+import { useBuilderConfig, useSchema } from '@/state/schemaStore';
 import { createNode } from '@/lib/nodes';
 import { downloadSchema, readSchemaFile } from '@/lib/persistence';
 
@@ -13,6 +13,7 @@ const MODE_ITEMS = [
 
 export default function Toolbar() {
   const { state, dispatch } = useSchema();
+  const config = useBuilderConfig();
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
   const schemaInputRef = useRef<HTMLInputElement | null>(null);
   const previousUrlRef = useRef<string | null>(null);
@@ -93,14 +94,16 @@ export default function Toolbar() {
         ) : null}
       </ButtonToolbar>
       <ButtonToolbar className="sb-toolbar-group">
-        <Button
-          size="sm"
-          appearance="primary"
-          disabled={state.mode !== 'edit'}
-          onClick={() => dispatch({ type: 'add-node', node: createNode({ kind: 'triangle', x: worldCenter().x, y: worldCenter().y }) })}
-        >
-          Добавить треугольник
-        </Button>
+        {config.current.canAddTriangle ? (
+          <Button
+            size="sm"
+            appearance="primary"
+            disabled={state.mode !== 'edit'}
+            onClick={() => dispatch({ type: 'add-node', node: createNode({ kind: 'triangle', x: worldCenter().x, y: worldCenter().y }) })}
+          >
+            Добавить треугольник
+          </Button>
+        ) : null}
         <Button
           size="sm"
           appearance="primary"
@@ -118,7 +121,7 @@ export default function Toolbar() {
         </Button>
         <Button
           size="sm"
-          onClick={() => downloadSchema({ version: 4, nodes: state.nodes, viewport: state.viewport })}
+          onClick={() => downloadSchema({ version: 5, nodes: state.nodes, viewport: state.viewport })}
         >
           Экспорт схемы
         </Button>

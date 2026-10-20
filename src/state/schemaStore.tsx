@@ -12,6 +12,7 @@ import {
 import type {
   BackgroundImage,
   ChildNode,
+  CustomData,
   EditorMode,
   GroupNode,
   Pt,
@@ -19,6 +20,7 @@ import type {
   SchemaNode,
   Viewport,
 } from '@/types/schema';
+import type { SchemaAvailableItem, SchemaBuilderConfig } from '@/types/builder';
 import {
   bakeGroupTransform,
   clampScale,
@@ -204,12 +206,33 @@ interface SchemaContextValue {
   state: SchemaState;
   dispatch: Dispatch<SchemaAction>;
   rotatePolygon: (id: string, radians: number) => void;
+  updateCustomData: (id: string, customData: CustomData) => void;
 }
 
 const SchemaContext = createContext<SchemaContextValue | null>(null);
 
-export function SchemaProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+export interface SchemaProviderProps {
+  document?: SchemaDocument | null;
+  background?: BackgroundImage | null;
+  children: ReactNode;
+}
+
+type InitialSchemaInput = Pick<SchemaProviderProps, 'document' | 'background'>;
+
+function createInitialState(props: InitialSchemaInput): SchemaState {
+  const document = props.document ?? null;
+  return {
+    ...initialState,
+    nodes: document?.nodes ?? [],
+    viewport: document
+      ? { ...document.viewport, scale: clampScale(document.viewport.scale) }
+      : initialState.viewport,
+    background: props.background ?? null,
+  };
+}
+
+export function SchemaProvider({ document, background, children }: SchemaProviderProps) {
+  const [state, dispatch] = useReducer(reducer, { document, background }, createInitialState);
 
   const rotatePolygon = useCallback(
     (id: string, radians: number) => {
@@ -230,12 +253,51 @@ export function SchemaProvider({ children }: { children: ReactNode }) {
     [dispatch]
   );
 
-  const value = useMemo(() => ({ state, dispatch, rotatePolygon }), [state, dispatch, rotatePolygon]);
+  const updateCustomData = useCallback(
+    (id: string, customData: CustomData) => {
+      dispatch({
+        type: 'update-node',
+        id,
+        mutate: (node) => (node.kind === 'item' ? { ...node, customData } : node),
+      });
+    },
+    [dispatch]
+  );
+
+  const value = useMemo(
+    () => ({ state, dispatch, rotatePolygon, updateCustomData }),
+    [state, dispatch, rotatePolygon, updateCustomData]
+  );
   return <SchemaContext.Provider value={value}>{children}</SchemaContext.Provider>;
 }
 
 export function useSchema(): SchemaContextValue {
   const ctx = useContext(SchemaContext);
   if (!ctx) throw new Error('useSchema must be used within SchemaProvider');
+  return ctx;
+}
+
+export interface BuilderConfigHandle {
+  readonly current: SchemaBuilderConfig;
+  findItem: (alias: string) => SchemaAvailableItem | undefined;
+}
+
+const BuilderConfigContext = createContext<BuilderConfigHandle | null>(null);
+
+export function BuilderConfigProvider({ config, children }: { config: SchemaBuilderConfig; children: ReactNode }) {
+  const handle = useMemo<BuilderConfigHandle>(
+    () => ({
+      current: config,
+      findItem: (alias: string) => config.availableItems.find((item) => item.alias === alias),
+    }),
+    [config]
+  );
+
+  return <BuilderConfigContext.Provider value={handle}>{children}</BuilderConfigContext.Provider>;
+}
+
+export function useBuilderConfig(): BuilderConfigHandle {
+  const ctx = useContext(BuilderConfigContext);
+  if (!ctx) throw new Error('useBuilderConfig must be used within BuilderConfigProvider');
   return ctx;
 }

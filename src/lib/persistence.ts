@@ -1,6 +1,4 @@
-import type { ChildNode, IconLibKey, Pt, SchemaDocument, SchemaNode, TriangleNode } from '@/types/schema';
-
-const ICON_LIBS: IconLibKey[] = ['md', 'gi', 'tb'];
+import type { ChildNode, CustomData, Pt, SchemaDocument, SchemaNode, TriangleNode } from '@/types/schema';
 
 const num = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -14,6 +12,11 @@ const point = (value: unknown): Pt | undefined => {
   const y = num(record.y);
   if (x === undefined || y === undefined) return undefined;
   return { x, y };
+};
+
+const customData = (value: unknown): CustomData | undefined => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  return value as CustomData;
 };
 
 export function serializeSchema(doc: SchemaDocument): string {
@@ -43,48 +46,26 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
   const kind = str(record.kind);
   if (!id || !kind) return { ok: false, error: `${label}: нет id или kind` };
 
-  if (kind === 'icon') {
-    const lib = str(record.lib) as IconLibKey | undefined;
-    const name = str(record.name);
+  if (kind === 'item') {
+    const alias = str(record.alias);
     const x = num(record.x);
     const y = num(record.y);
     const size = num(record.size);
-    if (!lib || !ICON_LIBS.includes(lib) || !name || x === undefined || y === undefined || size === undefined) {
-      return { ok: false, error: `${label}: некорректная иконка` };
+    if (!alias || x === undefined || y === undefined || size === undefined) {
+      return { ok: false, error: `${label}: некорректный элемент` };
     }
+    const data = customData(record.customData);
     return {
       ok: true,
       node: {
         id,
-        kind: 'icon',
-        lib,
-        name,
+        kind: 'item',
+        alias,
         x,
         y,
         size,
         rotation: num(record.rotation) ?? 0,
-      },
-    };
-  }
-
-  if (kind === 'component') {
-    const ref = str(record.ref);
-    const x = num(record.x);
-    const y = num(record.y);
-    const size = num(record.size);
-    if (!ref || x === undefined || y === undefined || size === undefined) {
-      return { ok: false, error: `${label}: некорректный компонент` };
-    }
-    return {
-      ok: true,
-      node: {
-        id,
-        kind: 'component',
-        ref,
-        x,
-        y,
-        size,
-        rotation: num(record.rotation) ?? 0,
+        ...(data ? { customData: data } : {}),
       },
     };
   }
@@ -139,7 +120,7 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
 export function validateSchema(raw: unknown): ValidationResult {
   if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'Файл не является объектом JSON' };
   const doc = raw as Record<string, unknown>;
-  if (doc.version !== 2 && doc.version !== 3 && doc.version !== 4) {
+  if (doc.version !== 5) {
     return { ok: false, error: 'Неподдерживаемая версия схемы' };
   }
   if (!Array.isArray(doc.nodes)) return { ok: false, error: 'Отсутствует массив nodes' };
@@ -156,7 +137,12 @@ export function validateSchema(raw: unknown): ValidationResult {
   const tx = num(viewportRaw?.tx) ?? 0;
   const ty = num(viewportRaw?.ty) ?? 0;
 
-  return { ok: true, document: { version: 4, nodes, viewport: { scale, tx, ty } } };
+  return { ok: true, document: { version: 5, nodes, viewport: { scale, tx, ty } } };
+}
+
+export function parseSchemaDocument(raw: unknown): SchemaDocument | null {
+  const result = validateSchema(raw);
+  return result.ok ? result.document : null;
 }
 
 export async function readSchemaFile(file: File): Promise<ValidationResult> {
