@@ -1,18 +1,27 @@
 'use client';
-
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+}                              from 'react';
 import { HexAlphaColorPicker } from 'react-colorful';
-import { normalizeHexAlpha } from '../../lib/color';
+import { normalizeHexAlpha }   from '../../lib/color';
 
 interface ColorSwatchFieldProps {
-  label: string;
   value?: string;
   fallback: string;
   onChange: (color: string) => void;
   onClear?: () => void;
 }
 
-export default function ColorSwatchField({ label, value, fallback, onChange, onClear }: ColorSwatchFieldProps) {
+export const ColorSwatchField = ({
+  value,
+  fallback,
+  onChange,
+  onClear
+}: ColorSwatchFieldProps): React.ReactNode => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -57,36 +66,37 @@ export default function ColorSwatchField({ label, value, fallback, onChange, onC
 
   return (
     <div className="sb-color-field" ref={rootRef}>
-      <span className="sb-color-label">{label}</span>
       <div className="sb-color-control">
         <button
           type="button"
           className="sb-color-swatch"
           style={swatchStyle}
-          aria-label={label}
-          title={label}
           onClick={togglePicker}
         />
-        {onClear ? (
+
+        {onClear && (
           <button type="button" className="sb-color-clear" onClick={onClear}>
             Сбросить
           </button>
-        ) : null}
+        )}
       </div>
-      {open ? (
+
+      {open && (
         <div className="sb-color-popover">
           <HexAlphaColorPicker
             color={color}
             style={{ width: '100%' }}
             onChange={(next) => {
               const safe = normalizeHexAlpha(next, color);
+
               setDraft(safe);
               onChange(safe);
             }}
-            onChangeEnd={closePicker}
           />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
+
+export default ColorSwatchField;

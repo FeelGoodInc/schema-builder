@@ -7,7 +7,44 @@
   bottom: $margin-xs;
   width: 30rem;
   z-index: 10;
-  background: #fff;
+  background: $app-light-bg;
   border-radius: $def-br;
-  box-shadow: 0 10px 30px rgba(15, 30, 50, 0.18);
+  box-shadow: $default-box-shadow;
+  padding: $padding-sm;
+}
+
+.title {
+  text-transform: uppercase;
+  font-weight: 700;
+  border-bottom: $default-border;
+  padding: $padding-xs 0 $padding-sm;
+  margin-bottom: $margin-md;
+}
+
+.property {
+  label {
+    font-weight: 600;
+    font-size: $font-sm;
+    margin-bottom: $margin-xs;
+    display: block;
+  }
+}
+
+.section {
+  &:not(:last-child) {
+    margin-bottom: $margin-xl;
+  }
+
+  .section_title {
+    margin-bottom: $margin-sm;
+    text-transform: uppercase;
+    font-size: $font-xs;
+    font-weight: 600;
+    color: $brand-middle-grey;
+  }
+
+  .section_content {
+    background-color: $white;
+    padding: $padding-sm;
+  }
 }
