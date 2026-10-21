@@ -1,0 +1,13 @@
+@import "variables";
+
+.root {
+  position: absolute;
+  top: 6rem;
+  right: $margin-xs;
+  bottom: $margin-xs;
+  width: 30rem;
+  z-index: 10;
+  background: #fff;
+  border-radius: $def-br;
+  box-shadow: 0 10px 30px rgba(15, 30, 50, 0.18);
+}

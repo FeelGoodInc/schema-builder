@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Loader } from "rsuite";
-import type { SchemaBuilderProps } from "@/types/builder";
+import type { SchemaBuilderProps } from "./SchemaBuilder/types/builder";
 
 const SchemaBuilder = dynamic(() => import("./SchemaBuilder"), {
   ssr: false,

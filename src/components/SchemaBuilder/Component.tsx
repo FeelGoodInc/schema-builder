@@ -1,16 +1,33 @@
 'use client';
+import type {
+  SchemaBuilderConfig,
+  SchemaBuilderProps
+}                              from './types/builder';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+}                              from 'react';
+import {
+  Message,
+  toaster
+}                              from 'rsuite';
+import {
+  BuilderConfigProvider,
+  SchemaProvider,
+  useSchema
+}                              from './state/schemaStore';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Message, toaster } from 'rsuite';
-import { BuilderConfigProvider, SchemaProvider, useSchema } from '@/state/schemaStore';
-import type { SchemaBuilderConfig, SchemaBuilderProps } from '@/types/builder';
-import { parseSchemaDocument } from '@/lib/persistence';
-import Toolbar from './Toolbar';
-import SchemaCanvas from './SchemaCanvas';
-import { Palette } from './Palette';
-import NodeInspector from './NodeInspector';
+import { parseSchemaDocument } from './lib/persistence';
+import Toolbar                 from './Toolbar';
+import SchemaCanvas            from './SchemaCanvas';
+import { Palette }             from './Palette';
+import NodeInspector           from './NodeInspector';
+import styles                  from './schema-builder.module.scss';
 
 const EMPTY_ITEMS: SchemaBuilderConfig['availableItems'] = [];
+const EMPTY_ACTIONS: SchemaBuilderConfig['actions'] = [];
 
 function InvalidDataNotice({ shown }: { shown: boolean }) {
   const reportedRef = useRef(false);
@@ -108,12 +125,12 @@ function Workspace() {
   }, [dispatch, state.mode, state.nodes, state.selectedIds]);
 
   return (
-    <div className="sb-app">
-      <header className="sb-header">
+    <div className={styles.root}>
+      <header className={styles.header}>
         <Toolbar />
       </header>
-      <div className="sb-body">
-        <div className="sb-canvas-wrap">
+      <div className={styles.content}>
+        <div className={styles.canvas_wrapper}>
           <SchemaCanvas />
           {state.mode === 'edit' ? <Palette /> : null}
           {state.mode === 'edit' && state.selectedIds.length ? <NodeInspector /> : null}
@@ -123,18 +140,19 @@ function Workspace() {
   );
 }
 
-export default function SchemaBuilder({
+export const SchemaBuilder = ({
   isEditable,
   data,
   backgroundImage,
   canAddTriangle = false,
   availableItems = EMPTY_ITEMS,
+  actions = EMPTY_ACTIONS,
   onItemClick,
   onChange,
-}: SchemaBuilderProps) {
+}: SchemaBuilderProps): React.ReactNode => {
   const config = useMemo<SchemaBuilderConfig>(
-    () => ({ availableItems, onItemClick, onChange, canAddTriangle }),
-    [availableItems, onItemClick, onChange, canAddTriangle]
+    () => ({ availableItems, actions, onItemClick, onChange, canAddTriangle }),
+    [availableItems, actions, onItemClick, onChange, canAddTriangle]
   );
 
   const [initialDocument] = useState(() => (data === undefined ? null : parseSchemaDocument(data)));
@@ -150,3 +168,5 @@ export default function SchemaBuilder({
     </SchemaProvider>
   );
 }
+
+export default SchemaBuilder;

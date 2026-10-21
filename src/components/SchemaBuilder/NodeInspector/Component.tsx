@@ -1,34 +1,43 @@
 'use client';
-
-import { Button, ButtonToolbar, InputPicker, NumberInput, Panel, VStack } from 'rsuite';
-import { useBuilderConfig, useSchema } from '@/state/schemaStore';
-import { MAX_GROUP_SCALE, MAX_NODE_SIZE, MIN_GROUP_SCALE, MIN_NODE_SIZE } from '@/lib/transform';
-import type { SchemaNode, TriangleNode } from '@/types/schema';
-
-const COLORS = [
-  '#5c6bc0',
-  '#1677ff',
-  '#2bb673',
-  '#f76808',
-  '#d62828',
-  '#ffb400',
-  '#272e3a',
-  '#ffffff',
-];
+import type {
+  SchemaNode,
+  TriangleNode
+}                           from '../types/schema';
+import {
+  Button,
+  ButtonToolbar,
+  NumberInput,
+  Panel,
+  VStack
+}                           from 'rsuite';
+import { useSchema }        from '../state/schemaStore';
+import {
+  MAX_GROUP_SCALE,
+  MAX_NODE_SIZE,
+  MIN_GROUP_SCALE,
+  MIN_NODE_SIZE
+}                           from '../lib/transform';
+import {
+  DEFAULT_ITEM_COLOR,
+  DEFAULT_TRIANGLE_FILL,
+  DEFAULT_TRIANGLE_STROKE
+}                           from '../lib/color';
+import ColorSwatchField     from './ColorSwatchField';
+import styles               from './sb-node-inspector.module.scss';
 
 export default function NodeInspector() {
   const { state, dispatch } = useSchema();
-  const config = useBuilderConfig();
   const selectedNodes = state.nodes.filter((item) => state.selectedIds.includes(item.id));
 
   if (!selectedNodes.length) return null;
 
   const canGroup = selectedNodes.length >= 2 && selectedNodes.every((item) => item.kind !== 'group');
+  const node = selectedNodes[0];
 
   if (selectedNodes.length > 1) {
     return (
-      <div className="sb-inspector">
-        <Panel bordered header={`Выбрано узлов: ${selectedNodes.length}`}>
+      <div className={styles.root}>
+        <Panel header={`Выбрано узлов: ${selectedNodes.length}`}>
           <VStack spacing={10}>
             <ButtonToolbar>
               <Button size="sm" appearance="primary" disabled={!canGroup} onClick={() => dispatch({ type: 'group-selected' })}>
@@ -44,12 +53,10 @@ export default function NodeInspector() {
     );
   }
 
-  const node = selectedNodes[0];
-
   if (node.kind === 'group') {
     return (
-      <div className="sb-inspector">
-        <Panel bordered header="Свойства: group">
+      <div className={styles.root}>
+        <Panel header="Свойства: group">
           <VStack spacing={10}>
             <div>Дочерних узлов: {node.children.length}</div>
             <NumberInput
@@ -104,22 +111,17 @@ export default function NodeInspector() {
     );
   }
 
-  const itemOptions = config.current.availableItems.map((item) => ({
-    label: `${item.title} (${item.alias})`,
-    value: item.alias,
-  }));
-
-  const update = (mutate: (current: SchemaNode) => SchemaNode) =>
+  const update = (mutate: (current: SchemaNode) => SchemaNode) => {
     dispatch({ type: 'update-node', id: node.id, mutate });
+  }
 
-  const asTriangle = (mutate: (current: TriangleNode) => TriangleNode) =>
+  const asTriangle = (mutate: (current: TriangleNode) => TriangleNode) => {
     update((current) => (current.kind === 'triangle' ? mutate(current) : current));
-
-  const colorOptions = COLORS.map((color) => ({ label: color, value: color }));
+  }
 
   return (
-    <div className="sb-inspector">
-      <Panel bordered header={`Свойства: ${node.kind}`}>
+    <div className={styles.root}>
+      <Panel header={`Свойства: ${node.kind}`}>
         <VStack spacing={10}>
           {node.kind !== 'triangle' ? (
             <>
@@ -147,35 +149,61 @@ export default function NodeInspector() {
                   update((current) => (current.kind === 'triangle' ? current : { ...current, rotation }));
                 }}
               />
-              <InputPicker
-                label="Заменить на элемент"
-                searchable
-                virtualized
-                data={itemOptions}
-                value={node.kind === 'item' ? node.alias : undefined}
-                onChange={(value) => {
-                  const alias = String(value ?? '');
-                  if (!alias) return;
-                  update((current) => {
-                    if (current.kind !== 'item' || current.alias === alias) return current;
-                    return { ...current, alias, customData: undefined };
-                  });
-                }}
-              />
+              {node.kind === 'item' ? (
+                <>
+                  <ColorSwatchField
+                    label="Цвет"
+                    value={node.color}
+                    fallback={DEFAULT_ITEM_COLOR}
+                    onChange={(color) => update((current) => (current.kind === 'item' ? { ...current, color } : current))}
+                    onClear={
+                      node.color
+                        ? () =>
+                            update((current) => {
+                              if (current.kind !== 'item') return current;
+                              const next = { ...current };
+                              delete next.color;
+                              return next;
+                            })
+                        : undefined
+                    }
+                  />
+                  <ButtonToolbar>
+                    <Button
+                      size="sm"
+                      appearance={node.flipX ? 'primary' : 'default'}
+                      onClick={() =>
+                        update((current) => (current.kind === 'item' ? { ...current, flipX: !current.flipX } : current))
+                      }
+                    >
+                      Отразить по горизонтали
+                    </Button>
+                    <Button
+                      size="sm"
+                      appearance={node.flipY ? 'primary' : 'default'}
+                      onClick={() =>
+                        update((current) => (current.kind === 'item' ? { ...current, flipY: !current.flipY } : current))
+                      }
+                    >
+                      Отразить по вертикали
+                    </Button>
+                  </ButtonToolbar>
+                </>
+              ) : null}
             </>
           ) : (
             <>
-              <InputPicker
+              <ColorSwatchField
                 label="Заливка"
-                data={colorOptions}
                 value={node.fill}
-                onChange={(value) => asTriangle((current) => ({ ...current, fill: String(value) }))}
+                fallback={DEFAULT_TRIANGLE_FILL}
+                onChange={(color) => asTriangle((current) => ({ ...current, fill: color }))}
               />
-              <InputPicker
+              <ColorSwatchField
                 label="Контур"
-                data={colorOptions}
                 value={node.stroke}
-                onChange={(value) => asTriangle((current) => ({ ...current, stroke: String(value) }))}
+                fallback={DEFAULT_TRIANGLE_STROKE}
+                onChange={(color) => asTriangle((current) => ({ ...current, stroke: color }))}
               />
               <NumberInput
                 label="Толщина контура"

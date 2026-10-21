@@ -1,0 +1,25 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+}
+
+.header {
+  padding: 10px 14px;
+  background: #fff;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+
+.canvas_wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}

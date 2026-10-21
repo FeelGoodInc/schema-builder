@@ -16,11 +16,12 @@ import type {
   EditorMode,
   GroupNode,
   Pt,
+  SchemaAction,
   SchemaDocument,
   SchemaNode,
   Viewport,
-} from '@/types/schema';
-import type { SchemaAvailableItem, SchemaBuilderConfig } from '@/types/builder';
+} from '../types/schema';
+import type { SchemaAvailableItem, SchemaBuilderConfig } from '../types/builder';
 import {
   bakeGroupTransform,
   clampScale,
@@ -28,7 +29,7 @@ import {
   panBy,
   rotatePoint,
   zoomAtPoint,
-} from '@/lib/transform';
+} from '../lib/transform';
 
 export interface SchemaState {
   mode: EditorMode;
@@ -38,26 +39,6 @@ export interface SchemaState {
   selectedIds: string[];
   viewportSize: { width: number; height: number };
 }
-
-export type SchemaAction =
-  | { type: 'set-mode'; mode: EditorMode }
-  | { type: 'set-viewport-size'; width: number; height: number }
-  | { type: 'set-viewport'; viewport: Viewport }
-  | { type: 'fit' }
-  | { type: 'zoom'; focus: Pt; factor: number }
-  | { type: 'pan'; delta: Pt }
-  | { type: 'add-node'; node: SchemaNode }
-  | { type: 'update-node'; id: string; mutate: (node: SchemaNode) => SchemaNode }
-  | { type: 'remove-node'; id: string }
-  | { type: 'remove-selected' }
-  | { type: 'select'; ids: string[] }
-  | { type: 'toggle-select'; id: string }
-  | { type: 'group-selected' }
-  | { type: 'ungroup'; id: string }
-  | { type: 'reorder'; id: string; to: 'front' | 'back' }
-  | { type: 'set-background'; background: BackgroundImage | null }
-  | { type: 'import'; document: SchemaDocument }
-  | { type: 'clear-nodes' };
 
 export const initialState: SchemaState = {
   mode: 'edit',

@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { Pt } from '@/types/schema';
+import type { Pt } from '../types/schema';
 
 export interface DragSession {
   cancel: () => void;

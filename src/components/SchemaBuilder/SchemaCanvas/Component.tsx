@@ -1,18 +1,43 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { DragEvent, PointerEvent as ReactPointerEvent } from 'react';
-import type { NewNode, Pt, SchemaNode } from '@/types/schema';
-import { useBuilderConfig, useSchema } from '@/state/schemaStore';
-import { itemDataOf } from '@/lib/itemData';
-import { createNode } from '@/lib/nodes';
-import { anchorOf, screenToWorld, translateNode } from '@/lib/transform';
-import { startPointerDrag, type DragSession } from '@/lib/drag';
-import NodeView, { type ActivateModifiers } from './NodeView';
-import HandlesLayer from './HandlesLayer';
-import SelectionLayer from './SelectionLayer';
+import {
+  type DragEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+}                          from 'react';
+import type {
+  NewNode,
+  Pt,
+  SchemaNode
+}                          from '../types/schema';
+import {
+  useBuilderConfig,
+  useSchema
+}                          from '../state/schemaStore';
+import { itemDataOf }      from '../lib/itemData';
+import { createNode }      from '../lib/nodes';
+import {
+  anchorOf,
+  screenToWorld,
+  translateNode
+}                          from '../lib/transform';
+import {
+  type DragSession,
+  startPointerDrag,
+}                          from '../lib/drag';
+import NodeView, {
+  type ActivateModifiers
+}                          from './NodeView';
+import HandlesLayer        from './HandlesLayer';
+import SelectionLayer      from './SelectionLayer';
+import cns                 from 'classnames';
+import styles              from './sb-canvas.module.scss';
 
-const DROP_MIME = 'application/x-schema-node';
+export const DROP_MIME = 'application/x-schema-node';
 const ZOOM_STEP = 1.12;
 
 export default function SchemaCanvas() {
@@ -183,12 +208,14 @@ export default function SchemaCanvas() {
   return (
     <div
       ref={containerRef}
-      className={panning ? 'sb-canvas sb-canvas--panning' : 'sb-canvas'}
+      className={cns(styles.root, {
+        [styles.panning]: panning,
+      })}
       onPointerDown={handleCanvasPointerDown}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <svg className="sb-canvas-layer" width="100%" height="100%">
+      <svg className={styles.layer} width="100%" height="100%">
         <defs>
           <pattern id="sb-grid" width={40} height={40} patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#d9dee7" strokeWidth={1} />
@@ -214,12 +241,12 @@ export default function SchemaCanvas() {
           width="100%"
           height="100%"
           fill="transparent"
-          className="sb-canvas-hit"
+          className={styles.hit}
         />
       </svg>
 
       <div
-        className="sb-nodes-layer"
+        className={styles.nodes_layer}
         style={{
           transform: `matrix(${state.viewport.scale},0,0,${state.viewport.scale},${state.viewport.tx},${state.viewport.ty})`,
         }}
@@ -239,7 +266,7 @@ export default function SchemaCanvas() {
       </div>
 
       {showSelectionLayer || showHandles ? (
-        <div className="sb-canvas-layer sb-handles-layer">
+        <div className={cns(styles.layer, styles.handles_layer)}>
           {showSelectionLayer ? <SelectionLayer nodes={selectedNodes} viewport={state.viewport} /> : null}
           {showHandles && primarySelected ? (
           <HandlesLayer
@@ -302,9 +329,9 @@ export default function SchemaCanvas() {
         </div>
       ) : null}
 
-      <div className="sb-canvas-hud">масштаб {Math.round(state.viewport.scale * 100)}%</div>
+      <div className={styles.hud}>
+        {Math.round(state.viewport.scale * 100)}%
+      </div>
     </div>
   );
 }
-
-export { DROP_MIME };

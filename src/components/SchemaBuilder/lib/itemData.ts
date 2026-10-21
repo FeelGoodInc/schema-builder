@@ -1,6 +1,6 @@
-import type { SchemaNode } from '@/types/schema';
-import type { SchemaItemData } from '@/types/builder';
-import { anchorOf, boundsOfNode } from '@/lib/transform';
+import type { SchemaNode } from '../types/schema';
+import type { SchemaItemData } from '../types/builder';
+import { anchorOf, boundsOfNode } from '../lib/transform';
 
 export const TRIANGLE_ALIAS = 'triangle';
 export const GROUP_ALIAS = 'group';
@@ -17,6 +17,9 @@ export function itemDataOf(node: SchemaNode): SchemaItemData {
       y: anchor.y,
       size: node.size,
       rotation: node.rotation,
+      color: node.color,
+      flipX: node.flipX ?? false,
+      flipY: node.flipY ?? false,
       customData: node.customData ?? {},
       node,
     };
@@ -31,6 +34,8 @@ export function itemDataOf(node: SchemaNode): SchemaItemData {
     y: anchor.y,
     size: Math.max(bounds.width, bounds.height),
     rotation: node.kind === 'group' ? node.rotation : 0,
+    flipX: false,
+    flipY: false,
     customData: {},
     node,
   };

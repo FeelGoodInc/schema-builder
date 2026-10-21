@@ -1,5 +1,5 @@
-import type { NewNode, Pt, SchemaNode } from '@/types/schema';
-import { createNodeId } from '@/state/schemaStore';
+import type { NewNode, Pt, SchemaNode } from '../types/schema';
+import { createNodeId } from '../state/schemaStore';
 
 export const DEFAULT_ICON_SIZE = 64;
 export const DEFAULT_TRIANGLE_SIDE = 140;

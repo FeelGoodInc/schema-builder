@@ -2,11 +2,11 @@
 
 import { memo } from 'react';
 import type { CSSProperties, MouseEvent, PointerEvent as ReactPointerEvent } from 'react';
-import type { CustomData, Pt, SchemaNode, Viewport } from '@/types/schema';
-import { useBuilderConfig } from '@/state/schemaStore';
-import { itemDataOf } from '@/lib/itemData';
-import { anchorOf, boundsOfPoints, groupBaseBounds, groupPivot, screenToWorld, triangleLocalPoints } from '@/lib/transform';
-import { startPointerDrag } from '@/lib/drag';
+import type { CustomData, Pt, SchemaNode, Viewport } from '../../types/schema';
+import { useBuilderConfig } from '../../state/schemaStore';
+import { itemDataOf } from '../../lib/itemData';
+import { anchorOf, boundsOfPoints, groupBaseBounds, groupPivot, screenToWorld, triangleLocalPoints } from '../../lib/transform';
+import { startPointerDrag } from '../../lib/drag';
 
 export interface ActivateModifiers {
   shiftKey: boolean;
@@ -170,13 +170,15 @@ function NodeView({
     );
   }
 
+  const flipTransform = `${node.flipX ? ' scaleX(-1)' : ''}${node.flipY ? ' scaleY(-1)' : ''}`;
   const frameStyle: CSSProperties = {
     position: 'absolute',
     left: node.x - node.size / 2,
     top: node.y - node.size / 2,
     width: node.size,
     height: node.size,
-    transform: `rotate(${node.rotation}deg)`,
+    transform: `rotate(${node.rotation}deg)${flipTransform}`,
+    color: node.color,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -199,7 +201,7 @@ function NodeView({
       ) : Icon ? (
         <Icon size={node.size} />
       ) : (
-        <UnknownNode label={node.alias} size={node.size} />
+        <UnknownNode label={node.alias} size={node.size} color={node.color} />
       )}
     </div>
   );
@@ -207,16 +209,17 @@ function NodeView({
 
 export default memo(NodeView);
 
-function UnknownNode({ label, size }: { label: string; size: number }) {
+function UnknownNode({ label, size, color }: { label: string; size: number; color?: string }) {
+  const safeColor = color ?? '#8a5a00';
   return (
     <div
       style={{
         width: size,
         height: size,
-        border: '2px dashed #d9a441',
+        border: `2px dashed ${safeColor}`,
         borderRadius: 6,
         background: 'rgba(217,164,65,0.12)',
-        color: '#8a5a00',
+        color: safeColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

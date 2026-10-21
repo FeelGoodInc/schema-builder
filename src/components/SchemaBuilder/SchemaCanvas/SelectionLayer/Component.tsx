@@ -1,7 +1,7 @@
 'use client';
 
-import type { SchemaNode, Viewport } from '@/types/schema';
-import { boundsOfNode, worldToScreen } from '@/lib/transform';
+import type { SchemaNode, Viewport } from '../../types/schema';
+import { boundsOfNode, worldToScreen } from '../../lib/transform';
 
 interface SelectionLayerProps {
   nodes: SchemaNode[];

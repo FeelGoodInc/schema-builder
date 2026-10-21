@@ -2,8 +2,7 @@
 
 import { useRef } from 'react';
 import { Button, ButtonToolbar, Message, SegmentedControl, toaster } from 'rsuite';
-import { useSchema } from '@/state/schemaStore';
-import { downloadSchema, readSchemaFile } from '@/lib/persistence';
+import { useSchema } from './state/schemaStore';
 
 const MODE_ITEMS = [
   { label: 'Создание схемы', value: 'edit' },
@@ -13,7 +12,6 @@ const MODE_ITEMS = [
 export default function Toolbar() {
   const { state, dispatch } = useSchema();
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
-  const schemaInputRef = useRef<HTMLInputElement | null>(null);
   const previousUrlRef = useRef<string | null>(null);
 
   const handleBackgroundFile = async (file: File | undefined) => {
@@ -38,17 +36,6 @@ export default function Toolbar() {
       toaster.push(<Message type="error">Не удалось прочитать изображение</Message>, { placement: 'topCenter' });
     };
     image.src = url;
-  };
-
-  const handleSchemaFile = async (file: File | undefined) => {
-    if (!file) return;
-    const result = await readSchemaFile(file);
-    if (!result.ok) {
-      toaster.push(<Message type="error">Импорт отменён: {result.error}</Message>, { placement: 'topCenter' });
-      return;
-    }
-    dispatch({ type: 'import', document: result.document });
-    toaster.push(<Message type="success">Схема импортирована</Message>, { placement: 'topCenter' });
   };
 
   return (
@@ -79,17 +66,6 @@ export default function Toolbar() {
           </Button>
         ) : null}
       </ButtonToolbar>
-      <ButtonToolbar className="sb-toolbar-group">
-        <Button
-          size="sm"
-          onClick={() => downloadSchema({ version: 5, nodes: state.nodes, viewport: state.viewport })}
-        >
-          Экспорт схемы
-        </Button>
-        <Button size="sm" onClick={() => schemaInputRef.current?.click()}>
-          Импорт схемы
-        </Button>
-      </ButtonToolbar>
       <input
         ref={backgroundInputRef}
         type="file"
@@ -97,16 +73,6 @@ export default function Toolbar() {
         hidden
         onChange={(event) => {
           void handleBackgroundFile(event.target.files?.[0]);
-          event.target.value = '';
-        }}
-      />
-      <input
-        ref={schemaInputRef}
-        type="file"
-        accept="application/json,.json"
-        hidden
-        onChange={(event) => {
-          void handleSchemaFile(event.target.files?.[0]);
           event.target.value = '';
         }}
       />

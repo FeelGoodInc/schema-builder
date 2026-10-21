@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { ChildNode, GroupNode, Pt, TriangleNode, Viewport } from '@/types/schema';
-import { startPointerDrag } from '@/lib/drag';
+import type { ChildNode, GroupNode, Pt, TriangleNode, Viewport } from '../../types/schema';
+import { startPointerDrag } from '../../lib/drag';
 import {
   MAX_GROUP_SCALE,
   MAX_NODE_SIZE,
@@ -20,7 +20,7 @@ import {
   snapDegrees,
   worldToScreen,
   screenToWorld,
-} from '@/lib/transform';
+} from '../../lib/transform';
 
 const HANDLE_SIZE = 12;
 const ROTATE_OFFSET = 26;

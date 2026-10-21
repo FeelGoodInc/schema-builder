@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import SchemaBuilderClient from '@/components/SchemaBuilderClient';
-import type { SchemaAvailableItem, SchemaItemData, SchemaItemProps } from '@/types/builder';
-import type { SchemaDocument } from '@/types/schema';
-import { MdOutlineSensors } from "react-icons/md";
+import type { SchemaAvailableItem, SchemaCustomAction, SchemaItemData, SchemaItemProps } from '@/components/SchemaBuilder/types/builder';
+import type { SchemaDocument } from '@/components/SchemaBuilder/types/schema';
+import { MdInfo, MdOutlineSensors } from "react-icons/md";
 import { GiCctvCamera } from "react-icons/gi";
 
 function CounterCard({ size, item, updateCustomData }: SchemaItemProps) {
@@ -62,6 +62,22 @@ const DEMO_ITEMS: SchemaAvailableItem[] = [
   },
 ];
 
+const DEMO_ACTIONS: SchemaCustomAction[] = [
+  {
+    title: 'Логи схемы',
+    icon: MdInfo,
+    onClick: (context) => {
+      console.log('[demo] schema action', {
+        mode: context.mode,
+        nodesCount: context.nodes.length,
+        groupsCount: context.groups.length,
+        selectedIds: context.selectedIds,
+        selectedItems: context.selectedItems,
+      });
+    },
+  },
+];
+
 const DEMO_DOCUMENT: SchemaDocument = {
   version: 5,
   nodes: [
@@ -81,6 +97,7 @@ export default function Home() {
       onChange={setSchema}
       canAddTriangle
       availableItems={DEMO_ITEMS}
+      actions={DEMO_ACTIONS}
       onItemClick={handleItemClick}
     />
   );

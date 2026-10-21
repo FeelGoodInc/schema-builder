@@ -10,6 +10,7 @@ $component-min-size: 3.5rem;
   z-index: 9;
   display: flex;
   align-items: stretch;
+  flex-wrap: wrap;
   gap: $margin-sm;
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.72);
@@ -38,7 +39,7 @@ $component-min-size: 3.5rem;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   max-width: 100%;
 
   button {

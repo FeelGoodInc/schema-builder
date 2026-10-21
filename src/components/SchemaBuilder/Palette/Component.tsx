@@ -1,18 +1,23 @@
 'use client';
 
-import type { DragEvent }              from 'react';
-import { Button, ButtonToolbar }       from 'rsuite';
-import type { NewNode }                from '@/types/schema';
-import { useBuilderConfig, useSchema } from '@/state/schemaStore';
-import { createNode }                  from '@/lib/nodes';
-import { DROP_MIME }                   from './../SchemaCanvas';
+import { useRef, type DragEvent }      from 'react';
+import { Button, ButtonToolbar, Message, toaster } from 'rsuite';
+import type { GroupNode, NewNode }     from '../types/schema';
+import type { SchemaCustomActionContext } from '../types/builder';
+import { useBuilderConfig, useSchema } from '../state/schemaStore';
+import { createNode }                  from '../lib/nodes';
+import { itemDataOf }                  from '../lib/itemData';
+import { downloadSchema, readSchemaFile } from '../lib/persistence';
+import { DROP_MIME }                   from '../SchemaCanvas';
 import cns                             from 'classnames';
 import {
   MdChangeHistory,
   MdCenterFocusStrong,
   MdLayers,
   MdLayersClear,
-  MdDeleteSweep
+  MdDeleteSweep,
+  MdOutlineFileDownload,
+  MdOutlineFileUpload
 }                                      from 'react-icons/md';
 import styles                          from './schema-builder-palette.module.scss';
 
@@ -20,6 +25,21 @@ export const Palette = (): React.ReactNode => {
   const { state, dispatch } = useSchema();
   const config = useBuilderConfig();
   const items = config.current.availableItems;
+  const actions = config.current.actions;
+  const schemaInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ----------------------------------------------------------------------------
+
+  const handleSchemaFile = async (file: File | undefined) => {
+    if (!file) return;
+    const result = await readSchemaFile(file);
+    if (!result.ok) {
+      toaster.push(<Message type="error">Импорт отменён: {result.error}</Message>, { placement: 'topCenter' });
+      return;
+    }
+    dispatch({ type: 'import', document: result.document });
+    toaster.push(<Message type="success">Схема импортирована</Message>, { placement: 'topCenter' });
+  };
 
   // ----------------------------------------------------------------------------
 
@@ -65,10 +85,51 @@ export const Palette = (): React.ReactNode => {
 
   // ----------------------------------------------------------------------------
 
+  const buildActionContext = (): SchemaCustomActionContext => {
+    const groups = state.nodes.filter((node): node is GroupNode => node.kind === 'group');
+    const selectedGroups = selectedNodes.filter((node): node is GroupNode => node.kind === 'group');
+
+    return {
+      mode: state.mode,
+      document: { version: 5, nodes: state.nodes, viewport: state.viewport },
+      nodes: state.nodes,
+      groups,
+      selectedIds: [...state.selectedIds],
+      selectedNodes,
+      selectedGroups,
+      selectedItems: selectedNodes.map(itemDataOf),
+      viewport: state.viewport,
+      viewportSize: { ...state.viewportSize },
+      background: state.background,
+      availableItems: config.current.availableItems,
+      canAddTriangle: config.current.canAddTriangle,
+      findItem: config.findItem,
+      dispatch,
+    };
+  };
+
+  // ----------------------------------------------------------------------------
+
   return (
     <div className={styles.root}>
       <section className={styles.group}>
         <ButtonToolbar className={styles.row}>
+          <Button
+            title="Импорт схемы"
+            size="sm"
+            onClick={() => schemaInputRef.current?.click()}
+          >
+            <MdOutlineFileDownload />
+          </Button>
+
+          <Button
+            title="Экспорт схемы"
+            size="sm"
+            onClick={() => downloadSchema({ version: 5, nodes: state.nodes, viewport: state.viewport })}
+          >
+            <MdOutlineFileUpload />
+          </Button>
+
           <Button
             title="Сгруппировать"
             size="sm"
@@ -102,6 +163,27 @@ export const Palette = (): React.ReactNode => {
           >
             <MdDeleteSweep />
           </Button>
+
+          {
+            actions.length > 0
+              ? (
+                actions.map((action, index) => {
+                  const Icon = action.icon;
+                  
+                  return (
+                    <Button
+                      key={`${action.title}-${index}`}
+                      title={action.title}
+                      size="sm"
+                      onClick={() => action.onClick(buildActionContext())}
+                    >
+                      {Icon ? <Icon /> : action.title}
+                    </Button>
+                  );
+                })
+              )
+              : null
+          }
         </ButtonToolbar>
       </section>
 
@@ -150,6 +232,17 @@ export const Palette = (): React.ReactNode => {
           }
         </div>
       </section>
+
+      <input
+        ref={schemaInputRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={(event) => {
+          void handleSchemaFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
     </div>
   );
 }

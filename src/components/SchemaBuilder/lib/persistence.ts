@@ -1,9 +1,22 @@
-import type { ChildNode, CustomData, Pt, SchemaDocument, SchemaNode, TriangleNode } from '@/types/schema';
+import type {
+  ChildNode,
+  CustomData,
+  Pt,
+  SchemaDocument,
+  SchemaNode,
+  TriangleNode
+} from '../types/schema';
+
+// ------------------------------------------------------------------------------------------------
 
 const num = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 
+// ------------------------------------------------------------------------------------------------
+
 const str = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+
+// ------------------------------------------------------------------------------------------------
 
 const point = (value: unknown): Pt | undefined => {
   if (typeof value !== 'object' || value === null) return undefined;
@@ -14,14 +27,20 @@ const point = (value: unknown): Pt | undefined => {
   return { x, y };
 };
 
+// ------------------------------------------------------------------------------------------------
+
 const customData = (value: unknown): CustomData | undefined => {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
   return value as CustomData;
 };
 
+// ------------------------------------------------------------------------------------------------
+
 export function serializeSchema(doc: SchemaDocument): string {
   return JSON.stringify(doc, null, 2);
 }
+
+// ------------------------------------------------------------------------------------------------
 
 export function downloadSchema(doc: SchemaDocument, filename = 'schema.json'): void {
   const blob = new Blob([serializeSchema(doc)], { type: 'application/json' });
@@ -32,6 +51,8 @@ export function downloadSchema(doc: SchemaDocument, filename = 'schema.json'): v
   link.click();
   URL.revokeObjectURL(url);
 }
+
+// ------------------------------------------------------------------------------------------------
 
 export type ValidationResult =
   | { ok: true; document: SchemaDocument }
@@ -55,6 +76,9 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
       return { ok: false, error: `${label}: некорректный элемент` };
     }
     const data = customData(record.customData);
+    const color = str(record.color);
+    const flipX = record.flipX === true;
+    const flipY = record.flipY === true;
     return {
       ok: true,
       node: {
@@ -66,6 +90,9 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
         size,
         rotation: num(record.rotation) ?? 0,
         ...(data ? { customData: data } : {}),
+        ...(color ? { color } : {}),
+        ...(flipX ? { flipX: true } : {}),
+        ...(flipY ? { flipY: true } : {}),
       },
     };
   }
@@ -117,6 +144,8 @@ function validateNode(item: unknown, label: string, allowGroup: boolean): NodeVa
   return { ok: false, error: `${label}: неизвестный kind "${kind}"` };
 }
 
+// ------------------------------------------------------------------------------------------------
+
 export function validateSchema(raw: unknown): ValidationResult {
   if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'Файл не является объектом JSON' };
   const doc = raw as Record<string, unknown>;
@@ -140,10 +169,14 @@ export function validateSchema(raw: unknown): ValidationResult {
   return { ok: true, document: { version: 5, nodes, viewport: { scale, tx, ty } } };
 }
 
+// ------------------------------------------------------------------------------------------------
+
 export function parseSchemaDocument(raw: unknown): SchemaDocument | null {
   const result = validateSchema(raw);
   return result.ok ? result.document : null;
 }
+
+// ------------------------------------------------------------------------------------------------
 
 export async function readSchemaFile(file: File): Promise<ValidationResult> {
   try {
@@ -153,3 +186,5 @@ export async function readSchemaFile(file: File): Promise<ValidationResult> {
     return { ok: false, error: 'Не удалось разобрать JSON' };
   }
 }
+
+// ------------------------------------------------------------------------------------------------

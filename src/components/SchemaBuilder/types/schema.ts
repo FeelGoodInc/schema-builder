@@ -18,6 +18,9 @@ export interface ItemNode extends NodeBase {
   kind: 'item';
   alias: string;
   customData?: CustomData;
+  color?: string;
+  flipX?: boolean;
+  flipY?: boolean;
 }
 
 export interface TriangleNode {
@@ -57,3 +60,23 @@ export interface BackgroundImage {
 export type NewNode =
   | { kind: 'item'; alias: string; x: number; y: number; size?: number }
   | { kind: 'triangle'; x: number; y: number };
+
+export type SchemaAction =
+  | { type: 'set-mode'; mode: EditorMode }
+  | { type: 'set-viewport-size'; width: number; height: number }
+  | { type: 'set-viewport'; viewport: Viewport }
+  | { type: 'fit' }
+  | { type: 'zoom'; focus: Pt; factor: number }
+  | { type: 'pan'; delta: Pt }
+  | { type: 'add-node'; node: SchemaNode }
+  | { type: 'update-node'; id: string; mutate: (node: SchemaNode) => SchemaNode }
+  | { type: 'remove-node'; id: string }
+  | { type: 'remove-selected' }
+  | { type: 'select'; ids: string[] }
+  | { type: 'toggle-select'; id: string }
+  | { type: 'group-selected' }
+  | { type: 'ungroup'; id: string }
+  | { type: 'reorder'; id: string; to: 'front' | 'back' }
+  | { type: 'set-background'; background: BackgroundImage | null }
+  | { type: 'import'; document: SchemaDocument }
+  | { type: 'clear-nodes' };
