@@ -7,7 +7,7 @@ import type { SchemaBuilderConfig, SchemaBuilderProps } from '@/types/builder';
 import { parseSchemaDocument } from '@/lib/persistence';
 import Toolbar from './Toolbar';
 import SchemaCanvas from './SchemaCanvas';
-import ItemsPanel from './ItemsPanel';
+import { Palette } from './Palette';
 import NodeInspector from './NodeInspector';
 
 const EMPTY_ITEMS: SchemaBuilderConfig['availableItems'] = [];
@@ -115,19 +115,16 @@ function Workspace() {
       <div className="sb-body">
         <div className="sb-canvas-wrap">
           <SchemaCanvas />
+          {state.mode === 'edit' ? <Palette /> : null}
           {state.mode === 'edit' && state.selectedIds.length ? <NodeInspector /> : null}
         </div>
-        {state.mode === 'edit' ? (
-          <aside className="sb-side">
-            <ItemsPanel />
-          </aside>
-        ) : null}
       </div>
     </div>
   );
 }
 
 export default function SchemaBuilder({
+  isEditable,
   data,
   backgroundImage,
   canAddTriangle = false,
@@ -143,7 +140,7 @@ export default function SchemaBuilder({
   const [initialDocument] = useState(() => (data === undefined ? null : parseSchemaDocument(data)));
 
   return (
-    <SchemaProvider document={initialDocument ?? undefined}>
+    <SchemaProvider document={initialDocument ?? undefined} mode={isEditable ? 'edit' : 'view'}>
       <BuilderConfigProvider config={config}>
         <InvalidDataNotice shown={data !== undefined && initialDocument === null} />
         <BackgroundLoader url={backgroundImage} />

@@ -1,0 +1,89 @@
+// NOTE: 1rem = {your_value_in_px} / 10;
+// EXAMPLE: 155px / 10 = 15.5rem;
+
+// COLORS
+$brand-primary-color:        #5e85c4;
+$brand-primary-color-darken: darken($brand-primary-color, 5%);
+$brand-dark-grey:            #5f6674;
+$brand-middle-grey:          #a1a6b2;
+$brand-success-color:        #3ac0a2;
+$brand-success-hover-color:  #3da991;
+$brand-warning-color:        #f0ad4e;
+$brand-danger-color:         #ce6667;
+$brand-info-color:           #428bca;
+$brand-aqua-color:           #5BC0DE;
+$brand-graphite-color:       #4b4f54;
+$brand-cold-grey-color:      #7c878d;
+$brand-aluminium-color:      #d8dfe1;
+
+$white:                      #ffffff;
+$black:                      #000000;
+$default-text-color:         rgba($black, 0.9);
+$link-color:                 #368cd6;
+$link-hover-color:           darken($link-color, 5%);
+$app-bg:                     #e4e7f0;
+$app-light-bg:               #F8F8FB;
+$overlay-bg-color:           rgba($app-bg, 0.7);
+
+// PADDINGS & MARGINS
+
+$padding-xs: 0.5rem;
+$padding-sm: 1rem;
+$padding-md: 1.5rem;
+$padding-lg: 2rem;
+$padding-xl: 2.5rem;
+$padding-xxl: 3rem;
+
+$margin-xs: $padding-xs;
+$margin-sm: $padding-sm;
+$margin-md: $padding-md;
+$margin-lg: $padding-lg;
+$margin-xl: $padding-xl;
+$margin-xxl: $padding-xxl;
+
+// UI SIZES
+$header-height: 5rem;
+$header-height: 5rem;
+$side-menu-width: 30rem;
+$side-menu-right-border-size: 0.4rem;
+$menu-height: 6rem;
+$default-form-width: 80rem;
+$view-content-padding: $padding-lg;
+
+//ADAPTIVE WIDTHS
+$mobile-width: 800px;
+$tablet-width: 1100px;
+
+// FONTS
+$font-inter: 'Inter', sans-serif;
+
+// FONT SIZES
+$font-xs: 0.9rem;
+$font-xs1: 1rem;
+$font-xs2: 1.1rem;
+$font-sm: 1.2rem;
+$font-sm1: 1.3rem;
+$font-sm2: 1.4rem;
+$font-md: 1.5rem;
+$font-md1: 1.6rem;
+$font-md2: 1.7rem;
+$font-lg: 1.9rem;
+$font-lg1: 2rem;
+$font-lg2: 2.1rem;
+$font-xl: 2.3rem;
+$font-xxl: 2.7rem;
+
+// BORDERS
+$default-border-color: lighten($app-bg, 4%);
+$default-border: 0.1rem solid $default-border-color;
+$dotted-border: 0.1rem dotted $default-border-color;
+$dashed-border: 0.1rem dashed $default-border-color;
+
+// VISUAL EFFECTS VARIABLES
+$transition-duration: 0.2s;
+$default-box-shadow-color: rgba($brand-dark-grey, 0.2);
+
+// VISUAL EFFECTS
+$def-br: 0.5rem; //default border-radius
+$default-box-shadow: 0 0 1.5rem $default-box-shadow-color;
+$light-box-shadow: 0 0 1rem lighten($default-box-shadow-color, 15%);

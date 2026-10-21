@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 62.5%;
+}
+
 html,
 body,
 #root,
@@ -13,7 +17,7 @@ body {
   margin: 0;
   background: #f2f4f7;
   color: #1f2733;
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1.3rem;
 }
 
 .sb-app {
@@ -165,69 +169,9 @@ body {
   pointer-events: none;
 }
 
-.sb-side {
-  width: 320px;
-  flex: 0 0 320px;
-  background: #fff;
-  border-left: 1px solid #e5e6eb;
-  overflow: auto;
-  padding: 12px;
-}
-
-.sb-panel-controls {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.sb-icon-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
-  gap: 6px;
-}
-
-.sb-icon-tile {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  background: #fbfdff;
-  color: #2b3644;
-  cursor: grab;
-}
-
-.sb-icon-tile:hover {
-  border-color: #1677ff;
-  color: #1677ff;
-}
-
-.sb-icon-tile--text {
-  padding: 4px;
-  font-size: 11px;
-  line-height: 1.2;
-  text-align: center;
-  overflow: hidden;
-}
-
-.sb-icon-tile--text span {
-  display: block;
-  max-height: 100%;
-  overflow: hidden;
-  word-break: break-word;
-}
-
-.sb-panel-hint {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #6b7280;
-  line-height: 1.4;
-}
-
 .sb-inspector {
   position: absolute;
-  top: 12px;
+  top: 78px;
   right: 12px;
   width: 280px;
   z-index: 10;

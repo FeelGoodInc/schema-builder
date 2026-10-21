@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { FaPlus } from 'react-icons/fa6';
 import SchemaBuilderClient from '@/components/SchemaBuilderClient';
 import type { SchemaAvailableItem, SchemaItemData, SchemaItemProps } from '@/types/builder';
 import type { SchemaDocument } from '@/types/schema';
+import { MdOutlineSensors } from "react-icons/md";
+import { GiCctvCamera } from "react-icons/gi";
 
 function CounterCard({ size, item, updateCustomData }: SchemaItemProps) {
   const count = typeof item.customData.count === 'number' ? item.customData.count : 0;
@@ -42,25 +43,29 @@ function CounterCard({ size, item, updateCustomData }: SchemaItemProps) {
 }
 
 const DEMO_ITEMS: SchemaAvailableItem[] = [
-  { alias: 'plus', title: 'Плюс', icon: FaPlus },
-  { alias: 'counter', title: 'Счётчик', component: CounterCard, defaultSize: 96 },
-  { alias: 'signal', title: 'Сигнал без иконки', onClick: (item) => console.log('[demo] item onClick', item.alias) },
+  {
+    alias: 'sensor',
+    title: 'Датчик',
+    icon: MdOutlineSensors
+  },
+  // {
+  //   alias: 'counter',
+  //   title: 'Счётчик',
+  //   component: CounterCard,
+  //   defaultSize: 96
+  // },
+  {
+    alias: 'camera',
+    title: 'Камера',
+    icon: GiCctvCamera,
+    onClick: (item) => console.log('[demo] item onClick', item.alias)
+  },
 ];
 
 const DEMO_DOCUMENT: SchemaDocument = {
   version: 5,
   nodes: [
-    { id: 'demo-plus', kind: 'item', alias: 'plus', x: 260, y: 220, size: 56, rotation: 0 },
-    {
-      id: 'demo-counter',
-      kind: 'item',
-      alias: 'counter',
-      x: 420,
-      y: 240,
-      size: 96,
-      rotation: 0,
-      customData: { count: 1 },
-    },
+    
   ],
   viewport: { scale: 1, tx: 0, ty: 0 },
 };
@@ -72,9 +77,8 @@ export default function Home() {
 
   return (
     <SchemaBuilderClient
-      data={schema}
+      isEditable
       onChange={setSchema}
-      backgroundImage="/demo-plan.svg"
       canAddTriangle
       availableItems={DEMO_ITEMS}
       onItemClick={handleItemClick}

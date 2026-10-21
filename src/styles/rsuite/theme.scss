@@ -1,0 +1,310 @@
+@import "variables";
+
+:root {
+  // FONT
+  --rs-font-family-base: 'Inter', sans-serif;
+  --rs-font-size-base: #{$font-sm2};
+  --rs-font-size-xs: #{$font-sm};
+  --rs-font-size-sm: #{$font-sm2};
+  --rs-font-size-md: #{$font-md};
+  --rs-font-size-lg: #{$font-md1};
+
+  // COLORS
+  --rs-color-green: #{$brand-success-color};
+  --rs-color-red: #{$brand-danger-color};
+  --rs-color-blue: #{$brand-info-color};
+  --rs-green-500: #{$brand-success-color};
+  --rs-green-600: #{darken($brand-success-color, 2%)};
+  --rs-green-700: #{darken($brand-success-color, 4%)};
+  --rs-green-800: #{darken($brand-success-color, 6%)};
+  --rs-green-900: #{darken($brand-success-color, 8%)};
+
+  --rs-red-500: #{$brand-danger-color};
+  --rs-red-600: #{darken($brand-danger-color, 2%)};
+  --rs-red-700: #{darken($brand-danger-color, 4%)};
+  --rs-red-800: #{darken($brand-danger-color, 6%)};
+  --rs-red-900: #{darken($brand-danger-color, 8%)};
+
+  // BUTTON
+  --rs-btn-font-weight: 500;
+  --rs-btn-font-size-lg: var(--rs-font-size-lg);
+  --rs-btn-padding-block-md: #{$padding-md};
+  --rs-btn-padding-inline-md: 1.2rem;
+  --rs-btn-padding-inline-lg: 1.6rem;
+  --rs-btn-size-xs: 2.4rem;
+  --rs-btn-size-sm: 2.8rem;
+  --rs-btn-size-md: 3.6rem;
+  --rs-btn-size-lg: 3.8rem;
+  --rs-btn-icon-size-sm: 1.8rem;
+
+  // BUTTON-ICON
+  --rs-btn-icon-size-md: 1.6rem;
+
+  // SPACING
+  --rs-spacing: 0.45rem;
+
+  --rs-text-primary: rgba(0,0,0,0.9);
+  --rs-text-link: #368cd6;
+  --rs-text-link-hover: #006dd3;
+  --rs-text-link-active: #0054a2;
+  --rs-form-errormessage-border: #{$brand-danger-color};
+  --rs-form-errormessage-bg: #{$brand-danger-color};
+  --rs-toggle-checked-bg: #{$brand-info-color};
+  --rs-btn-default-hover-text: var(--rs-text-primary);
+}
+
+.rs-picker-disabled {
+  .rs-input-group-addon {
+    background-color: var(--rs-input-disabled-bg) !important;
+
+    .rs-picker-clean {
+      opacity: 0.3;
+    }
+  }
+
+  .rs-picker-toggle-value,
+  .rs-picker-toggle-placeholder {
+    color: var(--rs-text-disabled) !important;
+  }
+}
+
+.rs-badge {
+  --rs-badge-font-size-xs: 0.625rem;
+  --rs-badge-font-size-sm: 1rem;
+  --rs-badge-font-size-md: 1.2rem;
+  --rs-badge-font-size-lg: 1.4rem;
+  --rs-badge-font-size-xl: 1rem;
+  --rs-badge-line-height-xs: 0.875rem;
+  --rs-badge-line-height-sm: 1.25rem;
+  --rs-badge-line-height-md: 1.5rem;
+  --rs-badge-line-height-lg: 1.125rem;
+  --rs-badge-line-height-xl: 1.25rem;
+}
+
+.rs-form-stack {
+  --rs-form-group-spacing: 0;
+  display: block;
+
+  .rs-form-group {
+    margin-bottom: $margin-lg;
+
+    .rs-input-group {
+      overflow: visible;
+
+      .rs-input {
+        border-radius: var(--rs-radius-sm);
+      }
+
+      .rs-input-group-addon:first-child {
+        border-radius: var(--rs-radius-sm) 0 0 var(--rs-radius-sm);
+      }
+    }
+  }
+}
+
+.rs-btn {
+  &:focus {
+    box-shadow: none;
+  }
+
+  &.add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+
+    svg {
+      font-size: 1.6rem;
+      margin-right: 0.6rem;
+    }
+  }
+}
+
+.rs-btn-default {
+  svg {
+    margin-top: -1px;
+  }
+}
+
+.rs-drawer {
+  .rs-drawer-header {
+    padding: $padding-lg 2.3rem $padding-lg $padding-lg * 3;
+
+    .rs-drawer-header-close {
+      top: calc(50% - 1.4rem);
+    }
+  }
+
+  .rs-drawer-body {
+    padding: 2.3rem;
+
+    &.inverted {
+      background-color: $app-light-bg;
+    }
+
+    [class^="form-footer"] {
+      padding-bottom: 0;
+      position: relative;
+    }
+  }
+
+  @media (max-width: $tablet-width) {
+    width: 100vw !important;
+
+    .rs-drawer-header {
+      padding: {
+        top: $padding-md;
+        right: $padding-md;
+        bottom: $padding-md;
+        left: $padding-md * 3;
+      }
+
+      .rs-drawer-header-close {
+        top: calc(50% - 1.4rem);
+        left: 0.8rem;
+      }
+    }
+
+    .rs-drawer-body {
+      padding: $padding-md;
+    }
+  }
+}
+
+.rs-modal {
+  margin: $margin-xxl auto;
+
+  .rs-modal-header {
+    border-bottom: 0.1rem solid lighten($app-bg, 4%);
+    padding-bottom: $padding-lg;
+    position: relative;
+    font: {
+      size: $font-md1;
+      weight: 500;
+    }
+
+    .rs-modal-header-close {
+      top: -0.2rem;
+      right: 0;
+      font-size: $font-lg1;
+      padding: 0;
+      line-height: 1;
+    }
+  }
+
+  .rs-modal-body {
+    overflow-x: hidden !important;
+  }
+
+  [class^="form-footer"] {
+    padding-bottom: 0;
+  }
+}
+
+.rs-form-error-message {
+  padding: 0.2rem 0.6rem;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  background-color: $brand-danger-color;
+  color: $white;
+}
+
+.rs-form:not(.rs-form-inline) .rs-form-group,
+.rs-form:not(.rs-form-inline) .rs-form-group:not(:last-child) {
+  margin-bottom: $padding-lg;
+}
+
+.rs-form-help-text {
+  padding-top: 0.8rem !important;
+  font-size: $font-sm;
+
+  &.no-padding-top {
+    padding-top: 0 !important;
+  }
+
+  &.rs-form-help-text-tooltip {
+    margin-left: $margin-sm;
+  }
+}
+
+.rs-form-control-label {
+  margin-bottom: $margin-sm;
+  font: {
+    size: $font-sm;
+    weight: 600;
+  }
+
+  &.with-note {
+    display: flex !important;
+    align-items: center;
+  }
+
+  > .rs-form-help-text {
+    height: 1.2rem;
+    padding-top: 0 !important;
+    margin-top: 0;
+    display: inline;
+    color: $brand-info-color;
+  }
+}
+
+.rs-form-control-wrapper.column {
+  > .rs-form-error-message-wrapper {
+    left: $margin-sm;
+  }
+}
+
+.rs-tooltip {
+  text-align: left;
+}
+
+.rs-picker-select-menu-items {
+  border-top: $default-border;
+
+  [role="option"] {
+    &:not(:last-child) {
+      border-bottom: $default-border;
+    }
+  }
+
+  .rs-picker-select-menu-item {
+    font-size: $font-sm1;
+    line-height: 1.6;
+  }
+}
+
+.rs-picker-menu-group-title {
+  &>span {
+    font-weight: 500;
+  }
+}
+
+.rs-picker-disabled {
+  opacity: 1;
+}
+
+.rs-picker-toggle {
+  min-height: 3.6rem;
+  overflow: visible;
+
+  .rs-picker-toggle-stack {
+    .rs-stack-item {
+      overflow: visible;
+
+      .rs-picker-toggle-value {
+        overflow: visible;
+        line-height: $font-md1;
+      }
+    }
+  }
+}
+
+.rs-checkbox {
+  padding: $padding-sm 0;
+}
+
+.rs-checkbox-checker {
+  .rs-form-control-label {
+    margin-bottom: 0;
+  }
+}

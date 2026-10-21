@@ -2,8 +2,7 @@
 
 import { useRef } from 'react';
 import { Button, ButtonToolbar, Message, SegmentedControl, toaster } from 'rsuite';
-import { useBuilderConfig, useSchema } from '@/state/schemaStore';
-import { createNode } from '@/lib/nodes';
+import { useSchema } from '@/state/schemaStore';
 import { downloadSchema, readSchemaFile } from '@/lib/persistence';
 
 const MODE_ITEMS = [
@@ -13,19 +12,9 @@ const MODE_ITEMS = [
 
 export default function Toolbar() {
   const { state, dispatch } = useSchema();
-  const config = useBuilderConfig();
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
   const schemaInputRef = useRef<HTMLInputElement | null>(null);
   const previousUrlRef = useRef<string | null>(null);
-
-  const worldCenter = () => ({
-    x: (state.viewportSize.width / 2 - state.viewport.tx) / state.viewport.scale,
-    y: (state.viewportSize.height / 2 - state.viewport.ty) / state.viewport.scale,
-  });
-
-  const selectedNodes = state.nodes.filter((node) => state.selectedIds.includes(node.id));
-  const canGroup = state.mode === 'edit' && selectedNodes.length >= 2 && selectedNodes.every((node) => node.kind !== 'group');
-  const selectedGroup = selectedNodes.length === 1 && selectedNodes[0].kind === 'group' ? selectedNodes[0] : null;
 
   const handleBackgroundFile = async (file: File | undefined) => {
     if (!file) return;
@@ -74,9 +63,6 @@ export default function Toolbar() {
         <Button size="sm" onClick={() => backgroundInputRef.current?.click()}>
           Загрузить подложку
         </Button>
-        <Button size="sm" onClick={() => dispatch({ type: 'fit' })}>
-          Вписать в холст
-        </Button>
         <Button size="sm" onClick={() => dispatch({ type: 'zoom', focus: { x: state.viewportSize.width / 2, y: state.viewportSize.height / 2 }, factor: 1.25 })}>
           Приблизить
         </Button>
@@ -94,31 +80,6 @@ export default function Toolbar() {
         ) : null}
       </ButtonToolbar>
       <ButtonToolbar className="sb-toolbar-group">
-        {config.current.canAddTriangle ? (
-          <Button
-            size="sm"
-            appearance="primary"
-            disabled={state.mode !== 'edit'}
-            onClick={() => dispatch({ type: 'add-node', node: createNode({ kind: 'triangle', x: worldCenter().x, y: worldCenter().y }) })}
-          >
-            Добавить треугольник
-          </Button>
-        ) : null}
-        <Button
-          size="sm"
-          appearance="primary"
-          disabled={!canGroup}
-          onClick={() => dispatch({ type: 'group-selected' })}
-        >
-          Сгруппировать
-        </Button>
-        <Button
-          size="sm"
-          disabled={!selectedGroup}
-          onClick={() => selectedGroup && dispatch({ type: 'ungroup', id: selectedGroup.id })}
-        >
-          Разгруппировать
-        </Button>
         <Button
           size="sm"
           onClick={() => downloadSchema({ version: 5, nodes: state.nodes, viewport: state.viewport })}

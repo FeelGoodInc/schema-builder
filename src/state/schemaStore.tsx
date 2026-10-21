@@ -214,15 +214,17 @@ const SchemaContext = createContext<SchemaContextValue | null>(null);
 export interface SchemaProviderProps {
   document?: SchemaDocument | null;
   background?: BackgroundImage | null;
+  mode?: EditorMode;
   children: ReactNode;
 }
 
-type InitialSchemaInput = Pick<SchemaProviderProps, 'document' | 'background'>;
+type InitialSchemaInput = Pick<SchemaProviderProps, 'document' | 'background' | 'mode'>;
 
 function createInitialState(props: InitialSchemaInput): SchemaState {
   const document = props.document ?? null;
   return {
     ...initialState,
+    mode: props.mode ?? initialState.mode,
     nodes: document?.nodes ?? [],
     viewport: document
       ? { ...document.viewport, scale: clampScale(document.viewport.scale) }
@@ -231,8 +233,8 @@ function createInitialState(props: InitialSchemaInput): SchemaState {
   };
 }
 
-export function SchemaProvider({ document, background, children }: SchemaProviderProps) {
-  const [state, dispatch] = useReducer(reducer, { document, background }, createInitialState);
+export function SchemaProvider({ document, background, mode, children }: SchemaProviderProps) {
+  const [state, dispatch] = useReducer(reducer, { document, background, mode }, createInitialState);
 
   const rotatePolygon = useCallback(
     (id: string, radians: number) => {
