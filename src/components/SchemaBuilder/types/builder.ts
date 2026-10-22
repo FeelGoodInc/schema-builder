@@ -1,4 +1,7 @@
-import type { ComponentType, Dispatch } from 'react';
+import type {
+  ComponentType,
+  Dispatch
+}                        from 'react';
 import type { IconType } from 'react-icons';
 import type {
   BackgroundImage,
@@ -9,7 +12,7 @@ import type {
   SchemaDocument,
   SchemaNode,
   Viewport,
-} from './schema';
+}                        from './schema';
 
 export interface SchemaItemData {
   alias: string;
@@ -74,13 +77,12 @@ export interface SchemaBuilderConfig {
 }
 
 export interface SchemaBuilderProps {
-  /** Начальный режим: true — редактирование, false — просмотр. Переключение кнопками в тулбаре доступно всегда. */
-  isEditable?: boolean;
   data?: SchemaDocument;
   backgroundImage?: string;
-  canAddTriangle?: boolean;
   availableItems?: SchemaAvailableItem[];
   actions?: SchemaCustomAction[];
+  isEditable?: boolean;
+  canAddTriangle?: boolean;
   onItemClick?: (item: SchemaItemData) => void;
   onChange?: (document: SchemaDocument) => void;
 }

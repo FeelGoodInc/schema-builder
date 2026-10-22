@@ -232,13 +232,15 @@ export const Palette = (): React.ReactNode => {
       )}
       
       <ButtonToolbar className={styles.group}>
-        <Button
-          title="Импорт схемы"
-          size="sm"
-          onClick={() => schemaInputRef.current?.click()}
-        >
-          <MdOutlineFileDownload />
-        </Button>
+        {isEditMode && (
+          <Button
+            title="Импорт схемы"
+            size="sm"
+            onClick={() => schemaInputRef.current?.click()}
+          >
+            <MdOutlineFileDownload />
+          </Button>
+        )}
 
         <Button
           title="Экспорт схемы"
@@ -288,26 +290,20 @@ export const Palette = (): React.ReactNode => {
           </Button>
         )}
 
-        {
-          actions.length > 0
-            ? (
-              actions.map((action, index) => {
-                const Icon = action.icon;
-                
-                return (
-                  <Button
-                    key={`${action.title}-${index}`}
-                    title={action.title}
-                    size="sm"
-                    onClick={() => action.onClick(buildActionContext())}
-                  >
-                    {Icon ? <Icon /> : action.title}
-                  </Button>
-                );
-              })
-            )
-            : null
-        }
+        {(isEditMode && actions.length > 0) && actions.map((action, index) => {
+          const Icon = action.icon;
+          
+          return (
+            <Button
+              key={`${action.title}-${index}`}
+              title={action.title}
+              size="sm"
+              onClick={() => action.onClick(buildActionContext())}
+            >
+              {Icon ? <Icon /> : action.title}
+            </Button>
+          );
+        })}
       </ButtonToolbar>
 
       {isEditMode && (
