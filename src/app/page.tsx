@@ -89,7 +89,7 @@ const DEMO_DOCUMENT: SchemaDocument = {
 const handleItemClick = (item: SchemaItemData) => console.log('[demo] click', item.alias, item.customData);
 
 export default function Home() {
-  const [schema, setSchema] = useState<SchemaDocument>(DEMO_DOCUMENT);
+  const [ schema, setSchema ] = useState<SchemaDocument>(DEMO_DOCUMENT);
 
   return (
     <SchemaBuilderClient

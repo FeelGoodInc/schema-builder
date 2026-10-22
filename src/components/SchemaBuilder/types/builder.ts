@@ -75,7 +75,7 @@ export interface SchemaBuilderConfig {
 
 export interface SchemaBuilderProps {
   /** Начальный режим: true — редактирование, false — просмотр. Переключение кнопками в тулбаре доступно всегда. */
-  isEditable: boolean;
+  isEditable?: boolean;
   data?: SchemaDocument;
   backgroundImage?: string;
   canAddTriangle?: boolean;
