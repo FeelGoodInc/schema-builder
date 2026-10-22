@@ -2,7 +2,7 @@
 
 .root {
   position: absolute;
-  top: 6rem;
+  top: 5.5rem;
   right: $margin-xs;
   bottom: $margin-xs;
   width: 30rem;
@@ -15,7 +15,7 @@
 
 .title {
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 600;
   border-bottom: $default-border;
   padding: $padding-xs 0 $padding-sm;
   margin-bottom: $margin-md;

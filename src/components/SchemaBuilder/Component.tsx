@@ -20,7 +20,6 @@ import {
 }                              from './state/schemaStore';
 
 import { parseSchemaDocument } from './lib/persistence';
-import Toolbar                 from './Toolbar';
 import SchemaCanvas            from './SchemaCanvas';
 import { Palette }             from './Palette';
 import NodeInspector           from './NodeInspector';
@@ -126,9 +125,6 @@ function Workspace() {
 
   return (
     <div className={styles.root}>
-      <header className={styles.header}>
-        <Toolbar />
-      </header>
       <div className={styles.content}>
         <div className={styles.canvas_wrapper}>
           <SchemaCanvas />

@@ -1,32 +1,78 @@
 'use client';
-
-import { useRef, type DragEvent }      from 'react';
-import { Button, ButtonToolbar, Message, toaster } from 'rsuite';
-import type { GroupNode, NewNode }     from '../types/schema';
+import type { GroupNode, NewNode }        from '../types/schema';
 import type { SchemaCustomActionContext } from '../types/builder';
-import { useBuilderConfig, useSchema } from '../state/schemaStore';
-import { createNode }                  from '../lib/nodes';
-import { itemDataOf }                  from '../lib/itemData';
-import { downloadSchema, readSchemaFile } from '../lib/persistence';
-import { DROP_MIME }                   from '../SchemaCanvas';
-import cns                             from 'classnames';
 import {
+  type DragEvent,
+  useRef,
+}                                         from 'react';
+import {
+  useBuilderConfig,
+  useSchema
+}                                         from '../state/schemaStore';
+import {
+  Button,
+  ButtonToolbar,
+  Message,
+  SegmentedControl,
+  toaster
+}                                         from 'rsuite';
+import { createNode }                     from '../lib/nodes';
+import { itemDataOf }                     from '../lib/itemData';
+import {
+  downloadSchema,
+  readSchemaFile
+}                                         from '../lib/persistence';
+import { DROP_MIME }                      from '../SchemaCanvas';
+import cns                                from 'classnames';
+import {
+  MdModeEdit,
+  MdOutlineVisibility,
   MdChangeHistory,
   MdCenterFocusStrong,
   MdLayers,
   MdLayersClear,
   MdDeleteSweep,
   MdOutlineFileDownload,
-  MdOutlineFileUpload
-}                                      from 'react-icons/md';
-import styles                          from './schema-builder-palette.module.scss';
+  MdOutlineFileUpload,
+  MdOutlineImageSearch,
+  MdOutlineImageNotSupported
+}                                         from 'react-icons/md';
+import styles                             from './schema-builder-palette.module.scss';
 
 export const Palette = (): React.ReactNode => {
   const { state, dispatch } = useSchema();
   const config = useBuilderConfig();
+  const schemaInputRef = useRef<HTMLInputElement | null>(null);
+  const backgroundInputRef = useRef<HTMLInputElement | null>(null);
+  const previousUrlRef = useRef<string | null>(null);
   const items = config.current.availableItems;
   const actions = config.current.actions;
-  const schemaInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ----------------------------------------------------------------------------
+
+  const handleBackgroundFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
+      toaster.push(<Message type="error">Подложка должна быть PNG или JPEG</Message>, { placement: 'topCenter' });
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      if (previousUrlRef.current) URL.revokeObjectURL(previousUrlRef.current);
+      previousUrlRef.current = url;
+      dispatch({
+        type: 'set-background',
+        background: { src: url, width: image.naturalWidth, height: image.naturalHeight, name: file.name },
+      });
+      dispatch({ type: 'fit' });
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      toaster.push(<Message type="error">Не удалось прочитать изображение</Message>, { placement: 'topCenter' });
+    };
+    image.src = url;
+  };
 
   // ----------------------------------------------------------------------------
 
@@ -112,126 +158,164 @@ export const Palette = (): React.ReactNode => {
 
   return (
     <div className={styles.root}>
-      <section className={styles.group}>
-        <ButtonToolbar className={styles.row}>
-          <Button
-            title="Импорт схемы"
-            size="sm"
-            onClick={() => schemaInputRef.current?.click()}
-          >
-            <MdOutlineFileDownload />
-          </Button>
-
-          <Button
-            title="Экспорт схемы"
-            size="sm"
-            onClick={() => downloadSchema({ version: 5, nodes: state.nodes, viewport: state.viewport })}
-          >
-            <MdOutlineFileUpload />
-          </Button>
-
-          <Button
-            title="Сгруппировать"
-            size="sm"
-            disabled={!canGroup}
-            onClick={() => dispatch({ type: 'group-selected' })}
-          >
-            <MdLayers />
-          </Button>
-
-          <Button
-            title="Разгруппировать"
-            size="sm"
-            disabled={!selectedGroup}
-            onClick={() => selectedGroup && dispatch({ type: 'ungroup', id: selectedGroup.id })}
-          >
-            <MdLayersClear />
-          </Button>
-
-          <Button
-            title="Вписать в холст"
-            size="sm"
-            onClick={() => dispatch({ type: 'fit' })}
-          >
-            <MdCenterFocusStrong/>
-          </Button>
-
-          <Button
-            title="Очистить схему"
-            size="sm"
-            onClick={() => dispatch({ type: 'clear-nodes' })}
-          >
-            <MdDeleteSweep />
-          </Button>
-
-          {
-            actions.length > 0
-              ? (
-                actions.map((action, index) => {
-                  const Icon = action.icon;
-                  
-                  return (
-                    <Button
-                      key={`${action.title}-${index}`}
-                      title={action.title}
-                      size="sm"
-                      onClick={() => action.onClick(buildActionContext())}
-                    >
-                      {Icon ? <Icon /> : action.title}
-                    </Button>
-                  );
-                })
-              )
-              : null
-          }
-        </ButtonToolbar>
-      </section>
+      <SegmentedControl
+        className={cns(styles.group, styles.toggle_mode)}
+        size="sm"
+        data={[
+          { label: <MdModeEdit />, value: 'edit' },
+          { label: <MdOutlineVisibility />, value: 'view' },
+        ]}
+        value={state.mode}
+        onChange={(value) => dispatch({ type: 'set-mode', mode: value === 'view' ? 'view' : 'edit' })}
+      />
 
       <div className={styles.divider} />
 
-      <section className={cns(styles.group, styles.components)}>
-        <div className={styles.row}>
-          {
-            config.current.canAddTriangle
-              ? (
-                <div
-                  className={styles.component}
-                  title="Треугольник"
-                  draggable
-                  onDragStart={(event) => setPayload(event, triangleSpec())}
-                  onClick={() => addAtCenter(triangleSpec())}
-                >
-                  <MdChangeHistory />
-                </div>
-              )
-              : null
-          }
+      <ButtonToolbar className={styles.group}>
+        <Button
+          title="Загрузить подложку"
+          size="sm"
+          onClick={() => backgroundInputRef.current?.click()}
+        >
+          <MdOutlineImageSearch />
+        </Button>
 
-          {
-            items.length === 0
-              ? (
-                <div className={styles.empty}>Нет доступных элементов</div>
-              )
-              : (
-                items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.alias}
-                      className={styles.component}
-                      title={item.title}
-                      draggable
-                      onDragStart={(event) => setPayload(event, itemSpec(item.alias, item.defaultSize))}
-                      onDoubleClick={() => addAtCenter(itemSpec(item.alias, item.defaultSize))}
-                    >
-                      {Icon ? <Icon size={24} /> : <span>{item.title}</span>}
-                    </div>
-                  );
-                })
-              )
-          }
-        </div>
-      </section>
+        {state.background && (
+          <Button
+            title="Убрать подложку"
+            size="sm"
+            onClick={() => {
+              if (previousUrlRef.current) URL.revokeObjectURL(previousUrlRef.current);
+
+              previousUrlRef.current = null;
+
+              dispatch({ type: 'set-background', background: null });
+            }}
+          >
+            <MdOutlineImageNotSupported />
+          </Button>
+        )}
+      </ButtonToolbar>
+
+      <div className={styles.divider} />
+
+      <ButtonToolbar className={styles.group}>
+        <Button
+          title="Импорт схемы"
+          size="sm"
+          onClick={() => schemaInputRef.current?.click()}
+        >
+          <MdOutlineFileDownload />
+        </Button>
+
+        <Button
+          title="Экспорт схемы"
+          size="sm"
+          onClick={() => downloadSchema({ version: 5, nodes: state.nodes, viewport: state.viewport })}
+        >
+          <MdOutlineFileUpload />
+        </Button>
+
+        <Button
+          title="Сгруппировать"
+          size="sm"
+          disabled={!canGroup}
+          onClick={() => dispatch({ type: 'group-selected' })}
+        >
+          <MdLayers />
+        </Button>
+
+        <Button
+          title="Разгруппировать"
+          size="sm"
+          disabled={!selectedGroup}
+          onClick={() => selectedGroup && dispatch({ type: 'ungroup', id: selectedGroup.id })}
+        >
+          <MdLayersClear />
+        </Button>
+
+        <Button
+          title="Вписать в холст"
+          size="sm"
+          onClick={() => dispatch({ type: 'fit' })}
+        >
+          <MdCenterFocusStrong/>
+        </Button>
+
+        <Button
+          title="Очистить схему"
+          size="sm"
+          onClick={() => dispatch({ type: 'clear-nodes' })}
+        >
+          <MdDeleteSweep />
+        </Button>
+
+        {
+          actions.length > 0
+            ? (
+              actions.map((action, index) => {
+                const Icon = action.icon;
+                
+                return (
+                  <Button
+                    key={`${action.title}-${index}`}
+                    title={action.title}
+                    size="sm"
+                    onClick={() => action.onClick(buildActionContext())}
+                  >
+                    {Icon ? <Icon /> : action.title}
+                  </Button>
+                );
+              })
+            )
+            : null
+        }
+      </ButtonToolbar>
+
+      <div className={styles.divider} />
+
+      <ButtonToolbar className={cns(styles.group, styles.components)}>
+        {
+          config.current.canAddTriangle
+            ? (
+              <Button
+                className={styles.component}
+                title="Треугольник"
+                draggable
+                onDragStart={(event) => setPayload(event, triangleSpec())}
+                onClick={() => addAtCenter(triangleSpec())}
+              >
+                <MdChangeHistory />
+              </Button>
+            )
+            : null
+        }
+
+        {
+          items.length === 0
+            ? (
+              <div className={styles.empty}>Нет доступных элементов</div>
+            )
+            : (
+              items.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Button
+                    key={item.alias}
+                    className={styles.component}
+                    title={item.title}
+                    draggable
+                    onDragStart={(event) => setPayload(event, itemSpec(item.alias, item.defaultSize))}
+                    onDoubleClick={() => addAtCenter(itemSpec(item.alias, item.defaultSize))}
+                  >
+                    {Icon ? <Icon size={24} /> : <span>{item.title}</span>}
+                  </Button>
+                );
+              })
+            )
+        }
+      </ButtonToolbar>
 
       <input
         ref={schemaInputRef}
@@ -240,6 +324,17 @@ export const Palette = (): React.ReactNode => {
         hidden
         onChange={(event) => {
           void handleSchemaFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+
+      <input
+        ref={backgroundInputRef}
+        type="file"
+        accept="image/png,image/jpeg"
+        hidden
+        onChange={(event) => {
+          void handleBackgroundFile(event.target.files?.[0]);
           event.target.value = '';
         }}
       />

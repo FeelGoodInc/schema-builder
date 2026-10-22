@@ -3,12 +3,13 @@ import type {
   SchemaNode,
   TriangleNode
 }                           from '../types/schema';
+import { useSchema }        from '../state/schemaStore';
 import {
   Button,
   NumberInput,
   VStack,
 }                           from 'rsuite';
-import { useSchema }        from '../state/schemaStore';
+import { ColorPickerField } from './ColorPickerField';
 import {
   MAX_GROUP_SCALE,
   MAX_NODE_SIZE,
@@ -20,7 +21,6 @@ import {
   DEFAULT_TRIANGLE_FILL,
   DEFAULT_TRIANGLE_STROKE
 }                           from '../lib/color';
-import { ColorPickerField } from './ColorPickerField';
 import styles               from './sb-node-inspector.module.scss';
 
 const DEFAULT_STACK_SPACING = 10;
@@ -77,6 +77,7 @@ export default function NodeInspector() {
             <Button
               size="xs"
               color="red"
+              appearance="primary"
               block
               onClick={() => dispatch({ type: 'remove-selected' })}
             >
