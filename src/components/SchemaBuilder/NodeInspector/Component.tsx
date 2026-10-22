@@ -6,7 +6,6 @@ import type {
 import {
   Button,
   NumberInput,
-  Panel,
   VStack,
 }                           from 'rsuite';
 import { useSchema }        from '../state/schemaStore';
@@ -21,7 +20,7 @@ import {
   DEFAULT_TRIANGLE_FILL,
   DEFAULT_TRIANGLE_STROKE
 }                           from '../lib/color';
-import ColorSwatchField     from './ColorSwatchField';
+import { ColorPickerField } from './ColorPickerField';
 import styles               from './sb-node-inspector.module.scss';
 
 const DEFAULT_STACK_SPACING = 10;
@@ -116,6 +115,7 @@ export default function NodeInspector() {
               <NumberInput
                 min={MIN_GROUP_SCALE * 100}
                 max={MAX_GROUP_SCALE * 100}
+                size="sm"
                 step={5}
                 value={Math.round(node.scale * 100)}
                 onChange={(value) => {
@@ -135,6 +135,7 @@ export default function NodeInspector() {
               <NumberInput
                 min={-360}
                 max={360}
+                size="sm"
                 step={15}
                 value={node.rotation}
                 onChange={(value) => {
@@ -224,6 +225,7 @@ export default function NodeInspector() {
                 <NumberInput
                   min={MIN_NODE_SIZE}
                   max={MAX_NODE_SIZE}
+                  size="sm"
                   step={2}
                   value={node.size}
                   onChange={(value) => {
@@ -241,6 +243,7 @@ export default function NodeInspector() {
                 <NumberInput
                   min={-360}
                   max={360}
+                  size="sm"
                   step={15}
                   value={node.rotation}
                   onChange={(value) => {
@@ -259,7 +262,7 @@ export default function NodeInspector() {
             <>
               <div className={styles.property}>
                 <label>Цвет</label>
-                <ColorSwatchField
+                <ColorPickerField
                   value={node.color}
                   fallback={DEFAULT_ITEM_COLOR}
                   onChange={(color) => update((current) => (current.kind === 'item' ? { ...current, color } : current))}
@@ -283,7 +286,7 @@ export default function NodeInspector() {
             <>
               <div className={styles.property}>
                 <label>Цвет заливки</label>
-                <ColorSwatchField
+                <ColorPickerField
                   value={node.fill}
                   fallback={DEFAULT_TRIANGLE_FILL}
                   onChange={(color) => asTriangle((current) => ({ ...current, fill: color }))}
@@ -292,7 +295,7 @@ export default function NodeInspector() {
 
               <div className={styles.property}>
                 <label>Цвет контура</label>
-                <ColorSwatchField
+                <ColorPickerField
                   value={node.stroke}
                   fallback={DEFAULT_TRIANGLE_STROKE}
                   onChange={(color) => asTriangle((current) => ({ ...current, stroke: color }))}
@@ -304,6 +307,7 @@ export default function NodeInspector() {
                 <NumberInput
                   min={0}
                   max={40}
+                  size="sm"
                   step={1}
                   value={node.strokeWidth}
                   onChange={(value) => {

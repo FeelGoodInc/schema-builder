@@ -8,20 +8,21 @@ import {
 }                              from 'react';
 import { HexAlphaColorPicker } from 'react-colorful';
 import { normalizeHexAlpha }   from '../../lib/color';
+import styles                  from './sb-color-picker-field.module.scss';
 
-interface ColorSwatchFieldProps {
+interface ColorPickerFieldProps {
   value?: string;
   fallback: string;
   onChange: (color: string) => void;
   onClear?: () => void;
 }
 
-export const ColorSwatchField = ({
+export const ColorPickerField = ({
   value,
   fallback,
   onChange,
   onClear
-}: ColorSwatchFieldProps): React.ReactNode => {
+}: ColorPickerFieldProps): React.ReactNode => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -65,24 +66,31 @@ export const ColorSwatchField = ({
   const swatchStyle = { '--sb-color': color } as CSSProperties;
 
   return (
-    <div className="sb-color-field" ref={rootRef}>
-      <div className="sb-color-control">
+    <div
+      className={styles.root}
+      ref={rootRef}
+    >
+      <div className={styles.control}>
         <button
           type="button"
-          className="sb-color-swatch"
+          className={styles.preview}
           style={swatchStyle}
           onClick={togglePicker}
         />
 
         {onClear && (
-          <button type="button" className="sb-color-clear" onClick={onClear}>
+          <button
+            type="button"
+            className={styles.clear}
+            onClick={onClear}
+          >
             Сбросить
           </button>
         )}
       </div>
 
       {open && (
-        <div className="sb-color-popover">
+        <div className={styles.popover}>
           <HexAlphaColorPicker
             color={color}
             style={{ width: '100%' }}
@@ -99,4 +107,4 @@ export const ColorSwatchField = ({
   );
 }
 
-export default ColorSwatchField;
+export default ColorPickerField;
