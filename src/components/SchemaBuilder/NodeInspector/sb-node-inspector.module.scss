@@ -1,24 +1,22 @@
-@import "variables";
-
 .root {
   position: absolute;
   top: 5.5rem;
-  right: $margin-xs;
-  bottom: $margin-xs;
+  right: var(--indent-xs);
+  bottom: var(--indent-xs);
   width: 30rem;
   z-index: 10;
-  background: $app-light-bg;
-  border-radius: $def-br;
-  box-shadow: $default-box-shadow;
-  padding: $padding-sm;
+  background: var(--default-light-bg);
+  border-radius: var(--def-br);
+  box-shadow: var(--default-box-shadow);
+  padding: var(--indent-sm);
 }
 
 .title {
   text-transform: uppercase;
   font-weight: 600;
-  border-bottom: $default-border;
-  padding: $padding-xs 0 $padding-sm;
-  margin-bottom: $margin-md;
+  border-bottom: var(--default-border);
+  padding: var(--indent-xs) 0 var(--indent-sm);
+  margin-bottom: var(--indent-md);
 }
 
 .property {
@@ -26,27 +24,27 @@
 
   label {
     font-weight: 600;
-    font-size: $font-sm;
-    margin-bottom: $margin-xs;
+    font-size: var(--font-sm);
+    margin-bottom: var(--indent-xs);
     display: block;
   }
 }
 
 .section {
   &:not(:last-child) {
-    margin-bottom: $margin-xl;
+    margin-bottom: var(--indent-xl);
   }
 
   .section_title {
-    margin-bottom: $margin-sm;
+    margin-bottom: var(--indent-sm);
     text-transform: uppercase;
-    font-size: $font-xs;
+    font-size: var(--font-xs);
     font-weight: 600;
-    color: $brand-middle-grey;
+    color: var(--middle-grey);
   }
 
   .section_content {
-    background-color: $white;
-    padding: $padding-sm;
+    background-color: var(--white);
+    padding: var(--indent-sm);
   }
 }

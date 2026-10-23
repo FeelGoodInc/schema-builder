@@ -1,4 +1,25 @@
 .root {
+  --indent-xs: 0.5rem;
+  --indent-sm: 1rem;
+  --indent-md: 1.5rem;
+  --indent-xl: 2.5rem;
+
+  --font-xs: 0.9rem;
+  --font-sm: 1.2rem;
+  --font-lg: 1.9rem;
+
+  --white: #ffffff;
+  --middle-grey: #a1a6b2;
+  --default-bg: #e4e7f0;
+  --default-light-bg: #F8F8FB;
+  --default-border-color: color-mix(in srgb, var(--default-bg), var(--white) 4%);
+  --default-box-shadow-color: color-mix(in srgb, #5f6674 20%, transparent);
+
+  --def-br: 0.5rem;
+  --default-border: 0.1rem solid var(--default-border-color);
+  --default-box-shadow: 0 0 1.5rem var(--default-box-shadow-color);
+  --transition-duration:  0.2s;
+
   display: flex;
   flex-direction: column;
   height: 100vh;

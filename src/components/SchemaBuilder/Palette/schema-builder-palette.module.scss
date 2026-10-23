@@ -1,22 +1,20 @@
-@import "variables";
-
 $component-min-size: 3.5rem;
 
 .root {
   position: absolute;
-  top: $margin-xs;
-  left: $margin-xs;
-  right: $margin-xs;
+  top: var(--indent-xs);
+  left: var(--indent-xs);
+  right: var(--indent-xs);
   z-index: 9;
   display: flex;
   align-items: stretch;
   flex-wrap: wrap;
-  gap: $margin-sm;
-  padding: $padding-xs;
-  background: rgba($white, 0.75);
+  gap: var(--indent-sm);
+  padding: var(--indent-xs);
+  background: color-mix(in srgb, var(--white) 75%, transparent);
   backdrop-filter: blur(0.8rem);
-  border-radius: $def-br;
-  box-shadow: $default-box-shadow;
+  border-radius: var(--def-br);
+  box-shadow: var(--default-box-shadow);
 }
 
 .toggle_mode {
@@ -31,19 +29,19 @@ $component-min-size: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 0.1rem solid $app-bg;
-    border-radius: $def-br;
-    padding: $padding-xs;
-    font-size: $font-sm;
-    background-color: $white;
-    transition: background-color ease-in-out $transition-duration;
+    border: 0.1rem solid var(--default-bg);
+    border-radius: var(--def-br);
+    padding: var(--indent-xs);
+    font-size: var(--font-sm);
+    background-color: var(--white);
+    transition: background-color ease-in-out var(--transition-duration);
   }
 
   button,
   .component,
   label {
     svg {
-      font-size: $font-lg;
+      font-size: var(--font-lg);
     }
   }
 }
@@ -54,7 +52,7 @@ $component-min-size: 3.5rem;
 }
 
 .empty {
-  font-size: $font-sm;
+  font-size: var(--font-sm);
   white-space: nowrap;
 }
 
