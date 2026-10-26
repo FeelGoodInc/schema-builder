@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import SchemaBuilderClient from '@/components/SchemaBuilderClient';
-import type { SchemaAvailableItem, SchemaCustomAction, SchemaItemData, SchemaItemProps } from '@/components/SchemaBuilder/types/builder';
-import type { SchemaDocument, SchemaNode } from '@/components/SchemaBuilder/types/schema';
+import SchemaBuilderClient from '../components/SchemaBuilderClient';
+import type { SchemaAvailableItem, SchemaCustomAction, SchemaItemData, SchemaItemProps } from '../components/SchemaBuilder/types/builder';
+import type { SchemaDocument, SchemaNode } from '../components/SchemaBuilder/types/schema';
 import { MdInfo, MdOutlineSensors } from "react-icons/md";
 import { GiCctvCamera } from "react-icons/gi";
 import { FaLocationDot, FaCircle } from 'react-icons/fa6'
