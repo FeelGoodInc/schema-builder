@@ -1,8 +1,15 @@
 'use client';
-
-import { useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { ChildNode, GroupNode, Pt, TriangleNode, Viewport } from '../../types/schema';
+import type {
+  PointerEvent as ReactPointerEvent
+}                           from 'react';
+import type {
+  ChildNode,
+  GroupNode,
+  Pt,
+  TriangleNode,
+  Viewport
+}                           from '../../types/schema';
+import { useState }         from 'react';
 import { startPointerDrag } from '../../lib/drag';
 import {
   MAX_GROUP_SCALE,
@@ -20,7 +27,9 @@ import {
   snapDegrees,
   worldToScreen,
   screenToWorld,
-} from '../../lib/transform';
+}                           from '../../lib/transform';
+import cns                  from 'classnames';
+import styles               from './sb-handles-layer.module.scss';
 
 const HANDLE_SIZE = 12;
 const ROTATE_OFFSET = 26;
@@ -39,7 +48,7 @@ interface HandlesLayerProps {
   onSetVertices: (id: string, vertices: [Pt, Pt, Pt]) => void;
 }
 
-export default function HandlesLayer({
+export const HandlesLayer = ({
   node,
   viewport,
   toLocal,
@@ -50,7 +59,7 @@ export default function HandlesLayer({
   onSetGroupRotation,
   onSetVertex,
   onSetVertices,
-}: HandlesLayerProps) {
+}: HandlesLayerProps): React.ReactNode => {
   if (node.kind === 'group') {
     return (
       <GroupHandles
@@ -82,8 +91,10 @@ export default function HandlesLayer({
     { x: -half, y: -half },
     { x: half, y: -half },
     { x: half, y: half },
-    { x: -half, y: half },
+    { x: -half, y: half },    
   ];
+
+  // -------------------------------------------------------------------------
 
   const startResize = () => (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -101,6 +112,8 @@ export default function HandlesLayer({
     });
   };
 
+  // -------------------------------------------------------------------------
+
   const startRotate = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
     startPointerDrag({
@@ -113,12 +126,14 @@ export default function HandlesLayer({
     });
   };
 
+  // -------------------------------------------------------------------------
+
   const rotateHandleOffset = rotateOffset({ x: 0, y: -half - ROTATE_OFFSET }, node.rotation);
 
   return (
     <>
       <div
-        className="sb-selection-frame"
+        className={styles.frame}
         style={{
           position: 'absolute',
           left: center.x - half,
@@ -128,7 +143,12 @@ export default function HandlesLayer({
           transform: `rotate(${node.rotation}deg)`,
         }}
       />
-      <svg className="sb-handles-svg" width="100%" height="100%">
+
+      <svg
+        className={styles.svg}
+        width="100%"
+        height="100%"
+      >
         <line
           x1={center.x + rotateOffset({ x: 0, y: -half }, node.rotation).x}
           y1={center.y + rotateOffset({ x: 0, y: -half }, node.rotation).y}
@@ -138,12 +158,14 @@ export default function HandlesLayer({
           strokeWidth={1}
         />
       </svg>
+
       {corners.map((corner, index) => {
         const offset = rotateOffset(corner, node.rotation);
+
         return (
           <div
             key={index}
-            className="sb-handle sb-handle--resize"
+            className={cns(styles.handle, styles.resize)}
             style={{
               left: center.x + offset.x - HANDLE_SIZE / 2,
               top: center.y + offset.y - HANDLE_SIZE / 2,
@@ -153,8 +175,9 @@ export default function HandlesLayer({
           />
         );
       })}
+
       <div
-        className="sb-handle sb-handle--rotate"
+        className={cns(styles.handle, styles.rotate)}
         style={{
           left: center.x + rotateHandleOffset.x - HANDLE_SIZE / 2,
           top: center.y + rotateHandleOffset.y - HANDLE_SIZE / 2,
@@ -165,7 +188,10 @@ export default function HandlesLayer({
   );
 }
 
-function GroupHandles({
+// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+
+const GroupHandles = ({
   node,
   viewport,
   toLocal,
@@ -177,17 +203,21 @@ function GroupHandles({
   toLocal: (clientX: number, clientY: number) => Pt;
   onSetGroupScale: (id: string, scale: number) => void;
   onSetGroupRotation: (id: string, degrees: number) => void;
-}) {
+}): React.ReactNode => {
   const base = groupBaseBounds(node);
   const center = worldToScreen(viewport, groupPivot(node));
   const halfW = (base.width * node.scale * viewport.scale) / 2;
   const halfH = (base.height * node.scale * viewport.scale) / 2;
 
+  // -------------------------------------------------------------------------
+
   const startResize = () => (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
+
     const startScale = node.scale;
     const startHalfW = (base.width * startScale * viewport.scale) / 2;
     const startHalfH = (base.height * startScale * viewport.scale) / 2;
+
     startPointerDrag({
       event,
       onMove: (client) => {
@@ -202,10 +232,14 @@ function GroupHandles({
     });
   };
 
+  // -------------------------------------------------------------------------
+
   const startRotate = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
+
     const startRotation = node.rotation;
     const startAngle = degreesFromCenter(center, toLocal(event.clientX, event.clientY));
+
     startPointerDrag({
       event,
       onMove: (client, native) => {
@@ -216,6 +250,8 @@ function GroupHandles({
       },
     });
   };
+
+  // -------------------------------------------------------------------------
 
   const corners: Array<{ x: number; y: number }> = [
     { x: -halfW, y: -halfH },
@@ -229,7 +265,7 @@ function GroupHandles({
   return (
     <>
       <div
-        className="sb-selection-frame"
+        className={styles.frame}
         style={{
           position: 'absolute',
           left: center.x - halfW,
@@ -239,7 +275,12 @@ function GroupHandles({
           transform: `rotate(${node.rotation}deg)`,
         }}
       />
-      <svg className="sb-handles-svg" width="100%" height="100%">
+
+      <svg
+        className={styles.svg}
+        width="100%"
+        height="100%"
+      >
         <line
           x1={center.x + rotateOffset({ x: 0, y: -halfH }, node.rotation).x}
           y1={center.y + rotateOffset({ x: 0, y: -halfH }, node.rotation).y}
@@ -249,12 +290,14 @@ function GroupHandles({
           strokeWidth={1}
         />
       </svg>
+
       {corners.map((corner, index) => {
         const offset = rotateOffset(corner, node.rotation);
+
         return (
           <div
             key={index}
-            className="sb-handle sb-handle--resize"
+            className={cns(styles.handle, styles.resize)}
             style={{
               left: center.x + offset.x - HANDLE_SIZE / 2,
               top: center.y + offset.y - HANDLE_SIZE / 2,
@@ -265,7 +308,7 @@ function GroupHandles({
         );
       })}
       <div
-        className="sb-handle sb-handle--rotate"
+        className={cns(styles.handle, styles.rotate)}
         style={{
           left: center.x + rotateHandleOffset.x - HANDLE_SIZE / 2,
           top: center.y + rotateHandleOffset.y - HANDLE_SIZE / 2,
@@ -276,9 +319,13 @@ function GroupHandles({
   );
 }
 
+// -------------------------------------------------------------------------
+
 function distance(a: Pt, b: Pt): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
+
+// -------------------------------------------------------------------------
 
 function nearestVertexIndex(vertices: Pt[], reference: Pt): number {
   let index = 0;
@@ -293,6 +340,8 @@ function nearestVertexIndex(vertices: Pt[], reference: Pt): number {
   return index;
 }
 
+// -------------------------------------------------------------------------
+
 function outwardDirection(from: Pt, to: Pt): Pt {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -301,7 +350,10 @@ function outwardDirection(from: Pt, to: Pt): Pt {
   return { x: dx / length, y: dy / length };
 }
 
-function TriangleHandles({
+// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+
+const TriangleHandles = ({
   node,
   viewport,
   toLocal,
@@ -315,13 +367,11 @@ function TriangleHandles({
   pointer: Pt | null;
   onSetVertex: (id: string, index: number, world: Pt) => void;
   onSetVertices: (id: string, vertices: [Pt, Pt, Pt]) => void;
-}) {
+}): React.ReactNode => {
   const [pinnedVertex, setPinnedVertex] = useState<number | null>(null);
-
   const screenVertices = node.vertices.map((v) => worldToScreen(viewport, v));
   const centerWorld = centroid(node.vertices);
   const centerScreen = worldToScreen(viewport, centerWorld);
-
   const anchorIndex = pinnedVertex ?? nearestVertexIndex(screenVertices, pointer ?? centerScreen);
   const anchor = screenVertices[anchorIndex];
   const direction = outwardDirection(centerScreen, anchor);
@@ -329,6 +379,8 @@ function TriangleHandles({
     x: anchor.x + direction.x * TRIANGLE_PIN_DISTANCE,
     y: anchor.y + direction.y * TRIANGLE_PIN_DISTANCE,
   };
+
+  // -------------------------------------------------------------------------
 
   const startVertexDrag = (index: number) => (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -342,9 +394,12 @@ function TriangleHandles({
     });
   };
 
+  // -------------------------------------------------------------------------
+
   const startRotate = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
     setPinnedVertex(anchorIndex);
+
     const snapshot = node.vertices.map((v) => ({ ...v })) as [Pt, Pt, Pt];
     const snapshotCenter = centroid(snapshot);
     const startCursor = screenToWorld(viewport, toLocal(event.clientX, event.clientY));
@@ -367,9 +422,15 @@ function TriangleHandles({
     });
   };
 
+  // -------------------------------------------------------------------------
+
   return (
     <>
-      <svg className="sb-handles-svg" width="100%" height="100%">
+      <svg
+        className={styles.svg}
+        width="100%"
+        height="100%"
+      >
         <polygon
           points={screenVertices.map((p) => `${p.x},${p.y}`).join(' ')}
           fill="none"
@@ -387,19 +448,23 @@ function TriangleHandles({
         />
         <circle cx={centerScreen.x} cy={centerScreen.y} r={3} fill="#1677ff" />
       </svg>
+
       {screenVertices.map((vertex, index) => (
         <div
           key={index}
-          className="sb-handle sb-handle--vertex"
+          className={cns(styles.handle, styles.vertex)}
           style={{ left: vertex.x - HANDLE_SIZE / 2, top: vertex.y - HANDLE_SIZE / 2 }}
           onPointerDown={startVertexDrag(index)}
         />
       ))}
+
       <div
-        className="sb-handle sb-handle--rotate"
+        className={cns(styles.handle, styles.rotate)}
         style={{ left: pin.x - HANDLE_SIZE / 2, top: pin.y - HANDLE_SIZE / 2 }}
         onPointerDown={startRotate}
       />
     </>
   );
 }
+
+export default HandlesLayer;

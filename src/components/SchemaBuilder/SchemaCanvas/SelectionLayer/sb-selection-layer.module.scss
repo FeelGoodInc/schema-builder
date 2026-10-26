@@ -1,0 +1,7 @@
+.outline {
+  position: absolute;
+  border: 0.1rem dashed var(--info-color);
+  background: color-mix(in srgb, var(--info-color) 20%, transparent);;
+  pointer-events: none;
+  z-index: 4;
+}
