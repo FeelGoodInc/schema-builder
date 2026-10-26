@@ -157,7 +157,7 @@ export function validateSchema(raw: unknown): ValidationResult {
   const nodes: SchemaNode[] = [];
   for (let i = 0; i < doc.nodes.length; i += 1) {
     const result = validateNode(doc.nodes[i], `Узел ${i}`, true);
-    if (!result.ok) return result;
+    if (result.ok === false) return result;
     nodes.push(result.node);
   }
 

@@ -102,7 +102,7 @@ export const Palette = (): React.ReactNode => {
 
     const result = await readSchemaFile(file);
 
-    if (!result.ok) {
+    if (result.ok === false) {
       toaster.push(
         <Message type="error">Импорт отменён: {result.error}</Message>,
         { placement: 'topCenter' }
