@@ -33,11 +33,6 @@ body {
   gap: 8px;
 }
 
-.sb-node {
-  pointer-events: auto;
-  user-select: none;
-}
-
 .sb-handles-svg {
   position: absolute;
   inset: 0;
@@ -59,14 +54,6 @@ body {
   background: rgba(22, 119, 255, 0.06);
   pointer-events: none;
   z-index: 4;
-}
-
-.sb-node--group {
-  pointer-events: none;
-}
-
-.sb-group-hit {
-  background: transparent;
 }
 
 .sb-handle {

@@ -186,7 +186,7 @@ const Workspace = ({
       <div className={styles.content}>
         <div className={styles.canvas_wrapper}>
           <SchemaCanvas />
-          {isEditable && <Palette />}
+          <Palette />
           {showNodeInspectorCondition && <NodeInspector />}
         </div>
       </div>
@@ -198,18 +198,38 @@ const Workspace = ({
 // ----------------------------------------------------------------------------------------
 
 export const SchemaBuilder = ({
-  isEditable = true,
+  isEditable = false,
   data,
   backgroundImage,
   canAddTriangle = false,
   availableItems = EMPTY_ITEMS,
+  activeItem,
   actions = EMPTY_ACTIONS,
+  customActions = null,
   onItemClick,
   onChange,
 }: SchemaBuilderProps): React.ReactNode => {
   const config = useMemo<SchemaBuilderConfig>(
-    () => ({ availableItems, actions, onItemClick, onChange, canAddTriangle }),
-    [availableItems, actions, onItemClick, onChange, canAddTriangle]
+    () => ({
+      availableItems,
+      activeItem,
+      actions,
+      customActions,
+      canAddTriangle,
+      isEditable,
+      onItemClick,
+      onChange,
+    }),
+    [
+      availableItems,
+      activeItem,
+      actions,
+      customActions,
+      canAddTriangle,
+      isEditable,
+      onItemClick,
+      onChange,
+    ]
   );
   const [initialDocument] = useState(() => (data === undefined ? null : parseSchemaDocument(data)));
 

@@ -1,6 +1,7 @@
 import type {
   ComponentType,
-  Dispatch
+  Dispatch,
+  ReactNode
 }                        from 'react';
 import type { IconType } from 'react-icons';
 import type {
@@ -68,21 +69,17 @@ export interface SchemaCustomAction {
   onClick: (context: SchemaCustomActionContext) => void;
 }
 
-export interface SchemaBuilderConfig {
-  availableItems: SchemaAvailableItem[];
-  actions: SchemaCustomAction[];
-  onItemClick?: (item: SchemaItemData) => void;
-  onChange?: (document: SchemaDocument) => void;
-  canAddTriangle: boolean;
-}
-
 export interface SchemaBuilderProps {
   data?: SchemaDocument;
   backgroundImage?: string;
   availableItems?: SchemaAvailableItem[];
+  activeItem?: SchemaItemData | null;
   actions?: SchemaCustomAction[];
+  customActions?: ReactNode;
   isEditable?: boolean;
   canAddTriangle?: boolean;
   onItemClick?: (item: SchemaItemData) => void;
   onChange?: (document: SchemaDocument) => void;
 }
+
+export type SchemaBuilderConfig = Omit<SchemaBuilderProps, 'data' | 'backgroundImage'>

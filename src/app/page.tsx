@@ -4,9 +4,10 @@ import { useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import SchemaBuilderClient from '@/components/SchemaBuilderClient';
 import type { SchemaAvailableItem, SchemaCustomAction, SchemaItemData, SchemaItemProps } from '@/components/SchemaBuilder/types/builder';
-import type { SchemaDocument } from '@/components/SchemaBuilder/types/schema';
+import type { SchemaDocument, SchemaNode } from '@/components/SchemaBuilder/types/schema';
 import { MdInfo, MdOutlineSensors } from "react-icons/md";
 import { GiCctvCamera } from "react-icons/gi";
+import { FaLocationDot, FaCircle } from 'react-icons/fa6'
 
 function CounterCard({ size, item, updateCustomData }: SchemaItemProps) {
   const count = typeof item.customData.count === 'number' ? item.customData.count : 0;
@@ -48,6 +49,16 @@ const DEMO_ITEMS: SchemaAvailableItem[] = [
     title: 'Датчик',
     icon: MdOutlineSensors
   },
+  {
+    alias: 'marker',
+    title: 'Маркер',
+    icon: FaLocationDot,
+  },
+  {
+    alias: 'dot',
+    title: 'Круг',
+    icon: FaCircle,
+  },
   // {
   //   alias: 'counter',
   //   title: 'Счётчик',
@@ -86,19 +97,22 @@ const DEMO_DOCUMENT: SchemaDocument = {
   viewport: { scale: 1, tx: 0, ty: 0 },
 };
 
-const handleItemClick = (item: SchemaItemData) => console.log('[demo] click', item.alias, item.customData);
-
 export default function Home() {
   const [ schema, setSchema ] = useState<SchemaDocument>(DEMO_DOCUMENT);
+  const [ acitveItem, setActiveItem ] = useState<SchemaItemData | null>(null);
+
+  const handleItemClick = (item: SchemaItemData) => { setActiveItem(item) };
 
   return (
     <SchemaBuilderClient
       isEditable
-      onChange={setSchema}
       canAddTriangle
       availableItems={DEMO_ITEMS}
+      activeItem={acitveItem}
       actions={DEMO_ACTIONS}
+      customActions={<button>123</button>}
       onItemClick={handleItemClick}
+      onChange={setSchema}
     />
   );
 }

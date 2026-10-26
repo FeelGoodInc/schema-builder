@@ -23,6 +23,7 @@ import {
   readSchemaFile
 }                                         from '../lib/persistence';
 import { DROP_MIME }                      from '../SchemaCanvas';
+import isNil                              from 'lodash/isNil';
 import cns                                from 'classnames';
 import {
   MdModeEdit,
@@ -45,9 +46,11 @@ export const Palette = (): React.ReactNode => {
   const schemaInputRef = useRef<HTMLInputElement | null>(null);
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
   const previousUrlRef = useRef<string | null>(null);
-  const items = config.current.availableItems;
-  const actions = config.current.actions;
-  const isEditMode = state.mode === 'edit';
+  const items = config.current.availableItems ?? [];
+  const actions = config.current.actions ?? [];
+  const customActions = config.current.customActions;
+  const isEditable = config.current.isEditable;
+  const isEditMode = isEditable && state.mode === 'edit';
 
   // ----------------------------------------------------------------------------
 
@@ -175,8 +178,8 @@ export const Palette = (): React.ReactNode => {
       viewport: state.viewport,
       viewportSize: { ...state.viewportSize },
       background: state.background,
-      availableItems: config.current.availableItems,
-      canAddTriangle: config.current.canAddTriangle,
+      availableItems: config.current.availableItems ?? [],
+      canAddTriangle: config.current.canAddTriangle ?? false,
       findItem: config.findItem,
       dispatch,
     };
@@ -186,19 +189,23 @@ export const Palette = (): React.ReactNode => {
 
   return (
     <div className={styles.root}>
-      <SegmentedControl
-        className={cns(styles.group, styles.toggle_mode)}
-        size="sm"
-        data={[
-          { label: <MdModeEdit />, value: 'edit' },
-          { label: <MdOutlineVisibility />, value: 'view' },
-        ]}
-        value={state.mode}
-        onChange={(value) => dispatch({ type: 'set-mode', mode: value === 'view' ? 'view' : 'edit' })}
-      />
+      {isEditable && (
+        <>
+          <SegmentedControl
+            className={cns(styles.group, styles.toggle_mode)}
+            size="sm"
+            data={[
+              { label: <MdModeEdit />, value: 'edit' },
+              { label: <MdOutlineVisibility />, value: 'view' },
+            ]}
+            value={state.mode}
+            onChange={(value) => dispatch({ type: 'set-mode', mode: value === 'view' ? 'view' : 'edit' })}
+          />
 
-      <div className={styles.divider} />
-
+          <div className={styles.divider} />
+        </>
+      )}
+      
       {isEditMode && (
         <>
           <ButtonToolbar className={styles.group}>
@@ -353,7 +360,17 @@ export const Palette = (): React.ReactNode => {
             }
           </ButtonToolbar>
         </>
-      )}      
+      )}
+
+      {!isNil(customActions) && (
+        <>
+          <div className={styles.divider} />
+        
+          <div className={cns(styles.group)}>
+            {customActions}
+          </div>
+        </>
+      )}
 
       <input
         ref={schemaInputRef}

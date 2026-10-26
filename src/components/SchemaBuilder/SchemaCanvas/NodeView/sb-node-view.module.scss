@@ -1,0 +1,40 @@
+@keyframes pulse-color {
+  0% {
+    color: var(--node-color);
+    filter: drop-shadow(0 0 0 color-mix(in srgb, var(--danger-color) 80%, transparent));
+  }
+  50% {
+    color: var(--danger-color);
+    filter: drop-shadow(0 0 2.5rem color-mix(in srgb, var(--danger-color) 100%, transparent));
+  }
+  100% {
+    color: var(--node-color);
+    filter: drop-shadow(0 0 0 color-mix(in srgb, var(--danger-color) 80%, transparent));
+  }
+}
+
+.root {
+  pointer-events: auto;
+  user-select: none;
+
+  &.pulsar {
+    animation: pulse-color 2s infinite ease-in-out;
+  }
+
+  &.active {
+    color: var(--danger-color);
+  }
+}
+
+.group {
+  pointer-events: none;
+}
+
+.group_hit {
+  background: transparent;
+}
+
+.pulse-shadow {
+  /* Привязываем анимацию: название, длительность, бесконечный повтор, плавное перетекание туда и обратно */
+  animation: pulse-shadow-glow 2s infinite ease-in-out;
+}

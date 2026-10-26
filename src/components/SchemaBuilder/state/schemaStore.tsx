@@ -271,7 +271,7 @@ export function BuilderConfigProvider({ config, children }: { config: SchemaBuil
   const handle = useMemo<BuilderConfigHandle>(
     () => ({
       current: config,
-      findItem: (alias: string) => config.availableItems.find((item) => item.alias === alias),
+      findItem: (alias: string) => (config.availableItems ?? []).find((item) => item.alias === alias),
     }),
     [config]
   );
@@ -281,6 +281,8 @@ export function BuilderConfigProvider({ config, children }: { config: SchemaBuil
 
 export function useBuilderConfig(): BuilderConfigHandle {
   const ctx = useContext(BuilderConfigContext);
+
   if (!ctx) throw new Error('useBuilderConfig must be used within BuilderConfigProvider');
+  
   return ctx;
 }

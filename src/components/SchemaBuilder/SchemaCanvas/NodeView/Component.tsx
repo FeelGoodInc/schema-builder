@@ -1,12 +1,30 @@
 'use client';
-
-import { memo } from 'react';
-import type { CSSProperties, MouseEvent, PointerEvent as ReactPointerEvent } from 'react';
-import type { CustomData, Pt, SchemaNode, Viewport } from '../../types/schema';
+import type {
+  CustomData,
+  Pt,
+  SchemaNode,
+  Viewport
+}                           from '../../types/schema';
+import {
+  type CSSProperties,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  memo,
+  useMemo,
+}                           from 'react';
 import { useBuilderConfig } from '../../state/schemaStore';
-import { itemDataOf } from '../../lib/itemData';
-import { anchorOf, boundsOfPoints, groupBaseBounds, groupPivot, screenToWorld, triangleLocalPoints } from '../../lib/transform';
+import { itemDataOf }       from '../../lib/itemData';
+import {
+  anchorOf,
+  boundsOfPoints,
+  groupBaseBounds,
+  groupPivot,
+  screenToWorld,
+  triangleLocalPoints
+}                           from '../../lib/transform';
 import { startPointerDrag } from '../../lib/drag';
+import cns                  from 'classnames';
+import styles               from './sb-node-view.module.scss';
 
 export interface ActivateModifiers {
   shiftKey: boolean;
@@ -28,6 +46,9 @@ interface NodeViewProps {
   onUpdateCustomData: (id: string, data: CustomData) => void;
 }
 
+// ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+
 function NodeView({
   node,
   viewport,
@@ -40,9 +61,13 @@ function NodeView({
 }: NodeViewProps) {
   const config = useBuilderConfig();
 
+  // ----------------------------------------------------------------------
+
   const handlePointerDown = (event: ReactPointerEvent<Element>) => {
     if (!interactive || !editable || event.button !== 0) return;
+
     event.stopPropagation();
+
     const modifiers = { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey };
     const anchor = anchorOf(node);
     const startWorld = screenToWorld(viewport, toLocal(event.clientX, event.clientY));
@@ -60,11 +85,20 @@ function NodeView({
     });
   };
 
+  // ----------------------------------------------------------------------
+
   const handleClick = (event: MouseEvent) => {
     if (!interactive || editable) return;
+
     event.stopPropagation();
-    onActivate(node, { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey });
+    onActivate(node, {
+      shiftKey: event.shiftKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey
+    });
   };
+
+  // ----------------------------------------------------------------------
 
   const interactiveProps = interactive
     ? editable
@@ -77,9 +111,10 @@ function NodeView({
     const pivot = groupPivot(node);
     const groupTransform =
       `translate(${pivot.x}px, ${pivot.y}px) rotate(${node.rotation}deg) scale(${node.scale}) translate(${-pivot.x}px, ${-pivot.y}px)`;
+
     return (
       <div
-        className="sb-node sb-node--group"
+        className={cns(styles.root, styles.group)}
         style={{
           position: 'absolute',
           left: 0,
@@ -113,9 +148,10 @@ function NodeView({
             />
           ))}
         </div>
+
         {interactive ? (
           <div
-            className="sb-group-hit"
+            className={styles.group_hit}
             style={{
               position: 'absolute',
               left: base.x,
@@ -137,9 +173,10 @@ function NodeView({
   if (node.kind === 'triangle') {
     const bounds = boundsOfPoints(node.vertices);
     const local = triangleLocalPoints(node.vertices, bounds);
+
     return (
       <div
-        className="sb-node"
+        className={styles.root}
         style={{
           position: 'absolute',
           left: bounds.x,
@@ -171,7 +208,7 @@ function NodeView({
   }
 
   const flipTransform = `${node.flipX ? ' scaleX(-1)' : ''}${node.flipY ? ' scaleY(-1)' : ''}`;
-  const frameStyle: CSSProperties = {
+  const frameStyle = {
     position: 'absolute',
     left: node.x - node.size / 2,
     top: node.y - node.size / 2,
@@ -179,19 +216,30 @@ function NodeView({
     height: node.size,
     transform: `rotate(${node.rotation}deg)${flipTransform}`,
     color: node.color,
+    '--node-color': node.color,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     pointerEvents: interactive ? undefined : 'none',
     cursor: editable ? 'move' : 'pointer',
-  };
+  } as CSSProperties;
 
   const available = config.findItem(node.alias);
   const CustomComponent = available?.component;
   const Icon = available?.icon;
+  const isActive = node.id === config.current?.activeItem?.id;
+  // eslint-disable-next-line
+  const isIndicating = useMemo(() => Math.random() >= 0.5, [node.id]);
 
   return (
-    <div className="sb-node" style={frameStyle} {...interactiveProps}>
+    <div
+      className={cns(styles.root, {
+        [styles.active]: isActive,
+        [styles.pulsar]: !isActive && isIndicating,
+      })}
+      style={frameStyle}
+      {...interactiveProps}
+    >
       {CustomComponent ? (
         <CustomComponent
           size={node.size}
@@ -211,6 +259,7 @@ export default memo(NodeView);
 
 function UnknownNode({ label, size, color }: { label: string; size: number; color?: string }) {
   const safeColor = color ?? '#8a5a00';
+
   return (
     <div
       style={{
