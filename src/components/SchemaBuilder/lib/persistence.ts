@@ -42,6 +42,12 @@ export function serializeSchema(doc: SchemaDocument): string {
 
 // ------------------------------------------------------------------------------------------------
 
+export function schemaSignature(doc: SchemaDocument): string {
+  return JSON.stringify({ nodes: doc.nodes, viewport: doc.viewport });
+}
+
+// ------------------------------------------------------------------------------------------------
+
 export function downloadSchema(doc: SchemaDocument, filename = 'schema.json'): void {
   const blob = new Blob([serializeSchema(doc)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

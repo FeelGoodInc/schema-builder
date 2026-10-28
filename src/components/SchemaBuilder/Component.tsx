@@ -3,11 +3,13 @@ import type {
   SchemaBuilderConfig,
   SchemaBuilderProps
 }                              from './types/builder';
+import type {
+  SchemaDocument
+}                              from './types/schema';
 import {
   useEffect,
   useMemo,
-  useRef,
-  useState
+  useRef
 }                              from 'react';
 import {
   Message,
@@ -21,7 +23,10 @@ import {
 import SchemaCanvas            from './SchemaCanvas';
 import { Palette }             from './Palette';
 import NodeInspector           from './NodeInspector';
-import { parseSchemaDocument } from './lib/persistence';
+import {
+  parseSchemaDocument,
+  schemaSignature,
+}                              from './lib/persistence';
 import cns                     from 'classnames';
 import styles                  from './schema-builder.module.scss';
 
@@ -31,18 +36,18 @@ const EMPTY_ACTIONS: SchemaBuilderConfig['actions'] = [];
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 
-function InvalidDataNotice({ shown }: { shown: boolean }) {
-  const reportedRef = useRef(false);
+function InvalidDataNotice({ shown, source }: { shown: boolean; source: unknown }) {
+  const reportedRef = useRef<unknown>(null);
 
   useEffect(() => {
-    if (!shown || reportedRef.current) return;
+    if (!shown || reportedRef.current === source) return;
 
-    reportedRef.current = true;
+    reportedRef.current = source;
     toaster.push(
       <Message type="error">Начальная схема некорректна: использована пустая схема</Message>,
       { placement: 'topCenter' }
     );
-  }, [shown]);
+  }, [shown, source]);
 
   return null;
 }
@@ -91,14 +96,22 @@ function BackgroundLoader({ url }: { url?: string }) {
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 
-function SchemaEmitter({ onChange }: { onChange?: SchemaBuilderProps['onChange'] }) {
+function SchemaEmitter({
+  onChange,
+  externalSignature,
+}: {
+  onChange?: SchemaBuilderProps['onChange'];
+  externalSignature: string | null;
+}) {
   const { state } = useSchema();
   const onChangeRef = useRef(onChange);
+  const externalSignatureRef = useRef(externalSignature);
   const skipRef = useRef(true);
 
   useEffect(() => {
     onChangeRef.current = onChange;
-  }, [onChange]);
+    externalSignatureRef.current = externalSignature;
+  }, [onChange, externalSignature]);
 
   useEffect(() => {
     if (skipRef.current) {
@@ -107,7 +120,11 @@ function SchemaEmitter({ onChange }: { onChange?: SchemaBuilderProps['onChange']
       return;
     }
 
-    onChangeRef.current?.({ version: 5, nodes: state.nodes, viewport: state.viewport });
+    const document: SchemaDocument = { version: 5, nodes: state.nodes, viewport: state.viewport };
+
+    if (externalSignatureRef.current !== null && externalSignatureRef.current === schemaSignature(document)) return;
+
+    onChangeRef.current?.(document);
   }, [state.nodes, state.viewport]);
 
   return null;
@@ -236,14 +253,21 @@ export const SchemaBuilder = ({
       onChange,
     ]
   );
-  const [initialDocument] = useState(() => (data === undefined ? null : parseSchemaDocument(data)));
+  const parsedDocument = useMemo(() => (data === undefined ? null : parseSchemaDocument(data)), [data]);
+  const externalSignature = useMemo(
+    () => (parsedDocument ? schemaSignature(parsedDocument) : null),
+    [parsedDocument]
+  );
 
   return (
-    <SchemaProvider document={initialDocument ?? undefined} mode={isEditable ? 'edit' : 'view'}>
+    <SchemaProvider document={parsedDocument ?? undefined} mode={isEditable ? 'edit' : 'view'}>
       <BuilderConfigProvider config={config}>
-        <InvalidDataNotice shown={data !== undefined && initialDocument === null} />
+        <InvalidDataNotice shown={data !== undefined && parsedDocument === null} source={data} />
         <BackgroundLoader url={backgroundImage} />
-        <SchemaEmitter onChange={onChange} />
+        <SchemaEmitter
+          onChange={onChange}
+          externalSignature={externalSignature}
+        />
         <Workspace
           className={className}
           isEditable={isEditable}

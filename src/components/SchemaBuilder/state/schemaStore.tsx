@@ -4,8 +4,10 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useRef,
   type Dispatch,
   type ReactNode,
 } from 'react';
@@ -30,6 +32,7 @@ import {
   rotatePoint,
   zoomAtPoint,
 } from '../lib/transform';
+import { schemaSignature } from '../lib/persistence';
 
 export interface SchemaState {
   mode: EditorMode;
@@ -216,6 +219,23 @@ function createInitialState(props: InitialSchemaInput): SchemaState {
 
 export function SchemaProvider({ document, background, mode, children }: SchemaProviderProps) {
   const [state, dispatch] = useReducer(reducer, { document, background, mode }, createInitialState);
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  const documentSignature = useMemo(() => (document ? schemaSignature(document) : null), [document]);
+
+  useEffect(() => {
+    if (!document || documentSignature === null) return;
+
+    const current = stateRef.current;
+    const currentSignature = schemaSignature({ version: 5, nodes: current.nodes, viewport: current.viewport });
+    if (documentSignature === currentSignature) return;
+
+    dispatch({ type: 'import', document });
+  }, [document, documentSignature]);
 
   const rotatePolygon = useCallback(
     (id: string, radians: number) => {
