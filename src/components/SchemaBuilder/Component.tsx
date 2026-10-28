@@ -22,6 +22,7 @@ import SchemaCanvas            from './SchemaCanvas';
 import { Palette }             from './Palette';
 import NodeInspector           from './NodeInspector';
 import { parseSchemaDocument } from './lib/persistence';
+import cns                     from 'classnames';
 import styles                  from './schema-builder.module.scss';
 
 const EMPTY_ITEMS: SchemaBuilderConfig['availableItems'] = [];
@@ -115,9 +116,10 @@ function SchemaEmitter({ onChange }: { onChange?: SchemaBuilderProps['onChange']
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 
-type WorkspaceProps = Pick<SchemaBuilderProps, 'isEditable'>;
+type WorkspaceProps = Pick<SchemaBuilderProps, 'className' | 'isEditable'>;
 
 const Workspace = ({
+  className,
   isEditable
 }: WorkspaceProps): React.ReactNode => {
   const { state, dispatch } = useSchema();
@@ -182,7 +184,9 @@ const Workspace = ({
   // ----------------------------------------------------------------------------------------
 
   return (
-    <div className={styles.root}>
+    <div className={cns(styles.root, {
+      ...className ? {[className]: true} : {}
+    })}>
       <div className={styles.content}>
         <div className={styles.canvas_wrapper}>
           <SchemaCanvas />
@@ -198,6 +202,7 @@ const Workspace = ({
 // ----------------------------------------------------------------------------------------
 
 export const SchemaBuilder = ({
+  className,
   isEditable = false,
   data,
   backgroundImage,
@@ -239,7 +244,10 @@ export const SchemaBuilder = ({
         <InvalidDataNotice shown={data !== undefined && initialDocument === null} />
         <BackgroundLoader url={backgroundImage} />
         <SchemaEmitter onChange={onChange} />
-        <Workspace isEditable={isEditable} />
+        <Workspace
+          className={className}
+          isEditable={isEditable}
+        />
       </BuilderConfigProvider>
     </SchemaProvider>
   );

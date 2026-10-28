@@ -70,6 +70,7 @@ export interface SchemaCustomAction {
 }
 
 export interface SchemaBuilderProps {
+  className?: string;
   data?: SchemaDocument;
   backgroundImage?: string;
   availableItems?: SchemaAvailableItem[];
