@@ -37,6 +37,7 @@ export type ChildNode = ItemNode | TriangleNode;
 export interface GroupNode {
   id: string;
   kind: 'group';
+  alias?: string;
   children: ChildNode[];
   scale: number;
   rotation: number;
